@@ -32,30 +32,38 @@ ifstream fin;
 
 class feedback {
 private:
-    string phone;
-    string customerName;
-    string feedBack;
+    char phone[11];
+    char name[26];
+    char Feedback[101];
 public:
     void addFeedback()
     {
         cin.ignore();
-        fout.open("storefeedback.dat", ios::binary);
+        fout.open("Storefeedback1.dat", ios::binary|ios::app);
+        if (!fout.is_open())
+        {
+            cout << "\n\n\tCant create file !!!";
+            return;
+        }
         cout << "\n\n\tPhone: ";
-        getline(cin, this->phone);
+        cin.getline(phone, 10);
+        
         cout << "\n\n\tCustomer Name: ";
-        getline(cin, this->customerName);
+        cin.ignore();
+        cin.getline(name, 25);
+        
         cout << "\n\n\tContent: ";
-        getline(cin, this->feedBack);
+        cin.ignore();
+        cin.getline(Feedback, 100);
         cout << "\n\n\n\tThank your feed back, We will try our best to solve this problem. ";
-        _getch();
         fout.write((char*)&fbk, sizeof(fbk));
         fout.close();
-
+        _getch();
     }
     void showFeedback()
     {
-        fin.open("storefeedback.dat", ios::binary);
-        if (fin.is_open() == false)
+        fin.open("Storefeedback1.dat", ios::binary);
+        if (!fin.is_open())
         {
             cout << "\n\nFile Not Found...";
             return;
@@ -63,12 +71,67 @@ public:
         while (fin.read((char*)&fbk, sizeof(fbk)))
         {
             cout << "\n\tCustom Name: ";
-            cout << customerName;
+            cout << name;
             cout << "\n\n\tPhone: ";
             cout << phone;
-            cout << "\n\n\tFeedback: " << feedBack << endl;
+            cout << "\n\n\tFeedback: " << Feedback;
+            cout << "\n\t\n--------------------------";
+        }
+        fin.close();
+        _getch();
+    }
+    void removeFeedback()
+    {
+        char phone[11];
+        flag = 0;
+        vector<feedback> tmp_fbk;
+        cout << "\n\n\tEnter Phone Number of customer :";
+        cin.ignore();
+        cin.getline(phone, 10);
+        fin.open("Storefeedback1.dat", ios::binary);
+
+        if (!fin.is_open())
+        {
+            cout << "\n\nFile Not Found...";
+            return;
+        }
+        fin.seekg(0, ios::beg);
+        //r = 0;
+        while (fin.read((char*)&fbk, sizeof(fbk)))
+        {
+
+            
+            if (strcmp(phone,fbk.returnPhone()) != 0)
+                tmp_fbk.push_back(fbk);
+            else
+                flag = 1;
+
+        }
+        fin.close();
+
+        
+        if (flag == 1)
+        {
+            fout.open("Storefeedback1.dat", ios::binary);
+            fout.seekp(0, ios::beg);
+            cout << "\n\t\tItem Succesfully Deleted";
+            for (int i = 0; i < tmp_fbk.size(); i++)
+                fout.write((char*)&tmp_fbk[i], sizeof(fbk));
+            fout.close();
+        }
+        if (flag == 0)
+        {
+            cout << "\n\t\tPhone No does not exist...Please Retry!";
+            _getch();
+            return;
         }
         _getch();
+        
+
+    }
+    char* returnPhone()
+    {
+        return fbk.phone;
     }
 } fbk;
 class item
@@ -259,13 +322,15 @@ void amount::remove()
     }
     fin.close();
 
-    fout.open("itemstore.dat", ios::binary);
-    fout.seekp(0, ios::beg);
+    
     if (flag == 1)
     {
+        fout.open("itemstore.dat", ios::binary);
+        fout.seekp(0, ios::beg);
         cout << "\n\t\tItem Succesfully Deleted";
         for (int i = 0; i < tmp_amt.size(); i++)
             fout.write((char*)&tmp_amt[i], sizeof(amt));
+        fout.close();
     }
     if (flag == 0)
     {
@@ -274,12 +339,13 @@ void amount::remove()
         return;
     }
     _getch();
-    fout.close();
+    
     
 }
 void amount::removeAll()
 {
     fout.open("itemstore.dat", ios::binary);
+    fout.close();
 }
 void amount::calculate()
 {
@@ -441,7 +507,8 @@ db:
         cout<<"\n\t\t1.Add Item Details\n\n";
         cout<<"\t\t2.Edit Item Details\n\n";
         cout<<"\t\t3.Delete Item Details\n\n";
-        cout<<"\t\t4.Back to Main Menu ";
+        cout << "\t\t4.Delete All Item\n\n";
+        cout<<"\t\t5.Back to Main Menu ";
         int apc;
         cin>>apc;
         switch(apc)
@@ -462,6 +529,9 @@ db:
             goto db;
         
         case 4:
+            amt.removeAll();
+            goto db;
+        case 5:
             goto menu;
         default:
             cout<<"\n\n\t\tWrong Choice!!! Retry";
@@ -505,7 +575,8 @@ db:
         cout << "===============================\n\n";
         cout << "\n\t\t1.Add Feedback\n\n";
         cout << "\t\t2.Show Feedback\n\n";
-        cout << "\n\t\t3. Back to Menu\n\n";
+        cout << "\n\t\t3. Remove feedback\n\n";
+        cout << "\n\t\t4. Back to menu\n\n";
         int apc1;
         cin >> apc1;
         switch (apc1)
@@ -516,7 +587,11 @@ db:
         case 2:
             fbk.showFeedback();
             goto ch;
+
         case 3:
+            fbk.removeFeedback();
+            goto ch;
+        case 4:
             goto menu;
         default:
             goto ch;
