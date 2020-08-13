@@ -1,15 +1,15 @@
 #define _CRT_SECURE_NO_WARNINGS 
-#include <iostream>
-#include <windows.h>
-#include <conio.h>
-#include <fstream>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <iomanip>
-#include <string>
-#include <ctime>
+#include<iostream>
+#include<windows.h>
+#include<conio.h>
+#include<fstream>
+#include<cstring>
+#include<cstdio>
+#include<cstdlib>
+#include<iomanip>
 #include <vector>
+#include <ctime>
+#include <string>
 using namespace std;
 //global variable declaration
 int k = 7, r = 0, flag = 0;
@@ -100,11 +100,115 @@ vector<string> Tokenizer::split(string haystack, string needle) {
     return tokens;
 }
 
-class item 
+class feedback {
+private:
+    char phone[11];
+    char name[26];
+    char Feedback[101];
+public:
+    void addFeedback()
+    {
+        cin.ignore();
+        fout.open("Storefeedback1.dat", ios::binary | ios::app);
+        if (!fout.is_open())
+        {
+            cout << "\n\n\tCant create file !!!";
+            return;
+        }
+        cout << "\n\n\tPhone: ";
+        cin.getline(phone, 10);
+
+        cout << "\n\n\tCustomer Name: ";
+        cin.ignore();
+        cin.getline(name, 25);
+
+        cout << "\n\n\tContent: ";
+        cin.ignore();
+        cin.getline(Feedback, 100);
+        cout << "\n\n\n\tThank your feed back, We will try our best to solve this problem. ";
+        fout.write((char*)&fbk, sizeof(fbk));
+        fout.close();
+        _getch();
+    }
+    void showFeedback()
+    {
+        fin.open("Storefeedback1.dat", ios::binary);
+        if (!fin.is_open())
+        {
+            cout << "\n\nFile Not Found...";
+            return;
+        }
+        while (fin.read((char*)&fbk, sizeof(fbk)))
+        {
+            cout << "\n\tCustom Name: ";
+            cout << name;
+            cout << "\n\n\tPhone: ";
+            cout << phone;
+            cout << "\n\n\tFeedback: " << Feedback;
+            cout << "\n\t\n--------------------------";
+        }
+        fin.close();
+        _getch();
+    }
+    void removeFeedback()
+    {
+        char phone[11];
+        flag = 0;
+        vector<feedback> tmp_fbk;
+        cout << "\n\n\tEnter Phone Number of customer :";
+        cin.ignore();
+        cin.getline(phone, 10);
+        fin.open("Storefeedback1.dat", ios::binary);
+
+        if (!fin.is_open())
+        {
+            cout << "\n\nFile Not Found...";
+            return;
+        }
+        fin.seekg(0, ios::beg);
+        //r = 0;
+        while (fin.read((char*)&fbk, sizeof(fbk)))
+        {
+
+
+            if (strcmp(phone, fbk.returnPhone()) != 0)
+                tmp_fbk.push_back(fbk);
+            else
+                flag = 1;
+
+        }
+        fin.close();
+
+
+        if (flag == 1)
+        {
+            fout.open("Storefeedback1.dat", ios::binary);
+            fout.seekp(0, ios::beg);
+            cout << "\n\t\tItem Succesfully Deleted";
+            for (int i = 0; i < tmp_fbk.size(); i++)
+                fout.write((char*)&tmp_fbk[i], sizeof(fbk));
+            fout.close();
+        }
+        if (flag == 0)
+        {
+            cout << "\n\t\tPhone No does not exist...Please Retry!";
+            _getch();
+            return;
+        }
+        _getch();
+
+
+    }
+    char* returnPhone()
+    {
+        return fbk.phone;
+    }
+} fbk;
+class item
 {
     int itemno;
     char name[25];
-    char* Time;
+    char Time[50];
 public:
     char* getTime()
     {
@@ -114,6 +218,8 @@ public:
         // chuyen doi hientai thanh dang chuoi
         char* dt = ctime(&hientai);
 
+
+        strcpy(Time, dt);
         cout << "Time of Bill: " << dt << endl;
 
         return dt;
@@ -127,7 +233,8 @@ public:
         cin.getline(name, 25);
         cout << "\n\n\t";
         //gets(name);
-        Time = getTime();
+        char* Time = getTime();
+        strcpy(this->Time, Time);
     }
     void show()
     {
@@ -147,7 +254,9 @@ public:
     int retno()
     {
         return(itemno);
+
     }
+
 };
 
 class amount : public item
@@ -155,6 +264,10 @@ class amount : public item
     float price, qty, tax, gross, dis, netamt;
 public:
     void add();
+    void input();
+    void edit();
+    void remove();
+    void removeAll();
     void show();
     void report();
     void calculate();
@@ -178,6 +291,130 @@ void amount::add()
     cin >> dis;
     calculate();
     fout.write((char*)&amt, sizeof(amt));
+    fout.close();
+}
+void amount::input()
+{
+    item::add();
+    cout << "\n\n\tPrice: ";
+    cin >> price;
+    cout << "\n\n\tQuantity: ";
+    cin >> qty;
+    cout << "\n\n\tTax percent: ";
+    cin >> tax;
+    cout << "\n\n\tDiscount percent: ";
+    cin >> dis;
+    calculate();
+}
+void amount::edit()
+{
+    int ino;
+    flag = 0;
+    vector<amount> tmp_amt;
+    cout << "\n\n\tEnter Item Number to be Edited :";
+    cin >> ino;
+    fin.open("itemstore.dat", ios::binary);
+
+    if (!fin.is_open())
+    {
+        cout << "\n\nFile Not Found...";
+        return;
+    }
+    fin.seekg(0, ios::beg);
+    r = 0;
+    // int count = 0;
+    while (fin.read((char*)&amt, sizeof(amt)))
+    {
+
+        int x = amt.item::retno();
+        if (x == ino)
+        {
+            flag = 1;
+            // fout.seekp(r * sizeof(amt));
+            system("cls");
+            /*cout << "\n\t\tCurrent Details are\n";
+            amt.show();*/
+            //fin.open("itemstore.dat", ios::binary);
+            //fin.seekg(r * sizeof(amt), ios::beg);
+            cout << "\n\n\t\tEnter New Details\n";
+            amt.input();
+            cout << "\n\t\tItem Details editted";
+        }
+        tmp_amt.push_back(amt);
+        r++;
+
+    }
+    // cout << endl << count << endl;
+    fin.close();
+
+    fout.open("itemstore.dat", ios::binary);
+    fout.seekp(0, ios::beg);
+    if (flag == 1)
+    {
+        cout << endl << tmp_amt.size() << endl;
+        for (int i = 0; i < tmp_amt.size(); i++)
+            fout.write((char*)&tmp_amt[i], sizeof(amt));
+    }
+    if (flag == 0)
+    {
+        cout << "\n\t\tItem No does not exist...Please Retry!";
+        _getch();
+        return;
+    }
+    _getch();
+    fout.close();
+}
+void amount::remove()
+{
+    int ino;
+    flag = 0;
+    vector<amount> tmp_amt;
+    cout << "\n\n\tEnter Item Number to be Edited :";
+    cin >> ino;
+    fin.open("itemstore.dat", ios::binary);
+
+    if (!fin.is_open())
+    {
+        cout << "\n\nFile Not Found...";
+        return;
+    }
+    fin.seekg(0, ios::beg);
+    //r = 0;
+    while (fin.read((char*)&amt, sizeof(amt)))
+    {
+
+        int x = amt.item::retno();
+        if (x != ino)
+            tmp_amt.push_back(amt);
+        else
+            flag = 1;
+
+    }
+    fin.close();
+
+
+    if (flag == 1)
+    {
+        fout.open("itemstore.dat", ios::binary);
+        fout.seekp(0, ios::beg);
+        cout << "\n\t\tItem Succesfully Deleted";
+        for (int i = 0; i < tmp_amt.size(); i++)
+            fout.write((char*)&tmp_amt[i], sizeof(amt));
+        fout.close();
+    }
+    if (flag == 0)
+    {
+        cout << "\n\t\tItem No does not exist...Please Retry!";
+        _getch();
+        return;
+    }
+    _getch();
+
+
+}
+void amount::removeAll()
+{
+    fout.open("itemstore.dat", ios::binary);
     fout.close();
 }
 void amount::calculate()
@@ -342,13 +579,13 @@ void Star::readFromFile(ifstream& in) {
             break;
         vector<string> tokens = Tokenizer::split(res, " ");
         vector<int> nums;
-        for (int i = 0; i < tokens.size(); i++){
+        for (int i = 0; i < tokens.size(); i++) {
             if (tokens[i].size() == 0)
                 break;
             int x = stoi(tokens[i]);
             nums.push_back(x);
         }
-        if (count % 2 == 1){
+        if (count % 2 == 1) {
             Time cur;
             cur.setDay(nums[0]);
             cur.setMonth(nums[1]);
@@ -363,6 +600,70 @@ void Star::readFromFile(ifstream& in) {
         count++;
     }
     in.close();
+}
+
+class Customer {
+private:
+    string name;
+    string phone_number;
+    int point;
+public:
+    void regis(string name, string phone);
+    vector<Customer> readFromFile(ifstream& in);
+    void writeToFile(ofstream& out, vector<Customer> customer);
+    void showDetail(vector<Customer> customer);
+};
+
+vector<Customer> Customer::readFromFile(ifstream& in) {
+    vector<Customer> customer;
+    in.open("customer.txt");
+    while (!in.eof()) {
+        string buffer;
+        getline(in, buffer);
+        if (buffer.size() == 0)
+            break;
+        Customer temp;
+        vector<string> tokens = Tokenizer::split(buffer, " - ");
+        temp.name = tokens[0];
+        temp.phone_number = tokens[1];
+        temp.point = stoi(tokens[2]);
+        customer.push_back(temp);
+    }
+    in.close();
+    return customer;
+}
+
+void Customer::regis(string name, string phone) {
+    Customer temp;
+    temp.name = name;
+    temp.phone_number = phone;
+    ifstream in;
+    ofstream out;
+    vector<Customer> customer = readFromFile(in);
+    for (int i = 0; i < customer.size(); i++) {
+        if (customer[i].phone_number == temp.phone_number) {
+            gotoxy(25, 3);
+            cout << "Your account was registered" << endl;
+            return;
+        }
+    }
+    temp.point = 0;
+    customer.push_back(temp);
+    gotoxy(25, 3);
+    cout << "You registered successfully" << endl;
+    writeToFile(out, customer);
+}
+
+void Customer::writeToFile(ofstream& out, vector<Customer> customer) {
+    out.open("customer.txt");
+    for (int i = 0; i < customer.size(); i++)
+        out << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << endl;
+    out.close();
+}
+
+void Customer::showDetail(vector<Customer> customer) {
+    for (int i = 0; i < customer.size(); i++)
+        cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << endl;
 }
 
 int main()
@@ -380,7 +681,9 @@ menu:
     cout << "\n\t\t1.Bill Report\n\n";
     cout << "\t\t2.Add/Remove/Edit Item\n\n";
     cout << "\t\t3.Show Item Details\n\n";
-    cout << "\t\t4.Exit\n\n";
+    cout << "\t\t4.Feed back\n\n";
+    cout << "\t\t5.Register\n\n";
+    cout << "\t\t6.Exit\n\n";
     cout << "\t\tPlease Enter Required Option: ";
     int ch, ff;
     float gtotal;
@@ -426,16 +729,14 @@ menu:
             }
             fin.seekg(0);
             gtotal = 0;
-            while (!fin.eof())
+            while (fin.read((char*)&amt, sizeof(amt)))
             {
-                fin.read((char*)&amt, sizeof(amt));
-                if (!fin.eof())
-                {
-                    amt.report();
-                    gtotal += amt.retnetamt();
-                    ff = 0;
-                }
-                if (ff != 0) gtotal = 0;
+
+
+                amt.report();
+                gtotal += amt.retnetamt();
+                ff = 0;
+
             }
             gotoxy(17, k);
             cout << "\n\n\n\t\t\tGrand Total=" << gtotal;
@@ -457,7 +758,8 @@ menu:
         cout << "\n\t\t1.Add Item Details\n\n";
         cout << "\t\t2.Edit Item Details\n\n";
         cout << "\t\t3.Delete Item Details\n\n";
-        cout << "\t\t4.Back to Main Menu ";
+        cout << "\t\t4.Delete All Item\n\n";
+        cout << "\t\t5.Back to Main Menu ";
         int apc;
         cin >> apc;
         switch (apc)
@@ -470,92 +772,17 @@ menu:
             goto db;
 
         case 2:
-            int ino;
-            flag = 0;
-            cout << "\n\n\tEnter Item Number to be Edited :";
-            cin >> ino;
-            fin.open("itemstore.dat", ios::binary);
-            fout.open("itemstore.dat", ios::binary | ios::app);
-            if (!fin)
-            {
-                cout << "\n\nFile Not Found...";
-                goto menu;
-            }
-            fin.seekg(0);
-            r = 0;
-            while (!fin.eof())
-            {
-                fin.read((char*)&amt, sizeof(amt));
-                if (!fin.eof())
-                {
-                    int x = amt.item::retno();
-                    if (x == ino)
-                    {
-                        flag = 1;
-                        fout.seekp(r * sizeof(amt));
-                        system("cls");
-                        cout << "\n\t\tCurrent Details are\n";
-                        amt.show();
-                        cout << "\n\n\t\tEnter New Details\n";
-                        amt.add();
-                        cout << "\n\t\tItem Details editted";
-                    }
-                }
-                r++;
-            }
-            if (flag == 0)
-            {
-                cout << "\n\t\tItem No does not exist...Please Retry!";
-                _getch();
-                goto db;
-            }
-            fin.close();
-            _getch();
+            amt.edit();
             goto db;
 
         case 3:
-            flag = 0;
-            cout << "\n\n\tEnter Item Number to be deleted :";
-            cin >> ino;
-            fin.open("itemstore.dat", ios::binary);
-            if (!fin)
-            {
-                cout << "\n\nFile Not Found...";
-                goto menu;
-            }
-            //fstream tmp("temp.dat",ios::binary|ios::out);
-            fin.seekg(0);
-            while (fin.read((char*)&amt, sizeof(amt)))
-            {
-                int x = amt.item::retno();
-                if (x != ino)
-                    tmp.write((char*)&amt, sizeof(amt));
-                else
-                {
-                    flag = 1;
-                }
-            }
-            fin.close();
-            tmp.close();
-            fout.open("itemstore.dat", ios::trunc | ios::binary);
-            fout.seekp(0);
-            tmp.open("temp.dat", ios::binary | ios::in);
-            if (!tmp)
-            {
-                cout << "Error in File";
-                goto db;
-            }
-            while (tmp.read((char*)&amt, sizeof(amt)))
-                fout.write((char*)&amt, sizeof(amt));
-            tmp.close();
-            fout.close();
-            if (flag == 1)
-                cout << "\n\t\tItem Succesfully Deleted";
-            else if (flag == 0)
-                cout << "\n\t\tItem does not Exist! Please Retry";
-            _getch();
+            amt.remove();
             goto db;
+
         case 4:
+            amt.removeAll();
+            goto db;
+        case 5:
             goto menu;
         default:
             cout << "\n\n\t\tWrong Choice!!! Retry";
@@ -590,13 +817,87 @@ menu:
         _getch();
         fin.close();
         goto menu;
-    case 4: {
+    case 4:
+    ch:
+        system("cls");
+        gotoxy(25, 2);
+        cout << "Please, Give us your feed back";
+        gotoxy(25, 3);
+        cout << "===============================\n\n";
+        cout << "\n\t\t1.Add Feedback\n\n";
+        cout << "\t\t2.Show Feedback\n\n";
+        cout << "\n\t\t3. Remove feedback\n\n";
+        cout << "\n\t\t4. Back to menu\n\n";
+        int apc1;
+        cin >> apc1;
+        switch (apc1)
+        {
+        case 1:
+            fbk.addFeedback();
+            goto ch;
+        case 2:
+            fbk.showFeedback();
+            goto ch;
+
+        case 3:
+            fbk.removeFeedback();
+            goto ch;
+        case 4:
+            goto menu;
+        default:
+            goto ch;
+        }
+    case 5:
+    qw: {
+        system("cls");
+        gotoxy(25, 3);
+        cout << "\n\t\t1.Register account" << endl;
+        cout << "\n\t\t2.View list of account" << endl;
+        cout << "\n\t\t3.Back to menu" << endl;
+        cout << "\n\t\tEnter your choice: ";
+        int option;
+        cin >> option;
+        while (option != 3) {
+            system("cls");
+            if (option == 1) {
+                Customer customer;
+                string name, phone;
+                gotoxy(25, 3);
+                cin.ignore(1);
+                cout << "Enter name: ";
+                getline(cin, name);
+                gotoxy(25, 5);
+                cout << "Enter phone: ";
+                getline(cin, phone);
+                _getch();
+                system("cls");
+                customer.regis(name, phone);
+                _getch();
+                goto qw;
+            }
+            else if (option == 2) {
+                ifstream in;
+                Customer temp;
+                vector<Customer> customer = temp.readFromFile(in);
+                temp.showDetail(customer);
+                _getch();
+                system("cls");
+                goto qw;
+            }
+        }
+        goto menu;
+    }
+    case 6: {
         system("cls");
         ifstream in;
         ofstream out;
+        gotoxy(25, 3);
         cout << "Before exiting this system, we need you vote some stars to improve the system" << endl;
+        gotoxy(25, 5);
         cout << "You should vote by entering character *" << endl;
+        gotoxy(25, 7);
         cout << "Example: 1 star = *, 2 stars = **, 3 stars = ***, 4 stars = ****, 5 stars = *****" << endl;
+        gotoxy(25, 9);
         cout << "Enter your choice here (1-5 stars): ";
         string res;
         cin >> res;
@@ -604,21 +905,29 @@ menu:
         int val = star.convertStar(res);
         system("cls");
         while (val == -1) {
+            gotoxy(25, 3);
             cout << "Your choice is invalid" << endl;
+            gotoxy(25, 5);
             cout << "Please choose again: ";
             cin >> res;
             val = star.convertStar(res);
             _getch();
             system("cls");
         }
+        gotoxy(25, 3);
         cout << "Thanks for your respond" << endl;
         star.writeToFile(out, res, in);
         _getch();
         system("cls");
+        gotoxy(25, 3);
         cout << "Do you want to use some feature?" << endl;
+        gotoxy(25, 5);
         cout << "1.View average stars" << endl;
+        gotoxy(25, 7);
         cout << "2.View history of respond" << endl;
+        gotoxy(25, 9);
         cout << "3.Exit" << endl;
+        gotoxy(25, 11);
         cout << "Enter your choice here (1-3): ";
         int option;
         cin >> option;
@@ -626,12 +935,15 @@ menu:
         system("cls");
         while (option != 3) {
             if (option < 1 || option > 3) {
+                gotoxy(25, 3);
                 cout << "Your choice is invalid" << endl;
+                gotoxy(25, 5);
                 cout << "Please choose again: " << endl;
                 cin >> option;
             }
             else if (option == 1) {
                 ifstream in;
+                gotoxy(25, 3);
                 cout << "The average stars is: " << star.calcAvg() << endl;
             }
             else {
@@ -641,10 +953,15 @@ menu:
             }
             _getch();
             system("cls");
+            gotoxy(25, 3);
             cout << "Do you want to use some feature?" << endl;
+            gotoxy(25, 5);
             cout << "1.View average stars" << endl;
+            gotoxy(25, 7);
             cout << "2.View history of respond" << endl;
+            gotoxy(25, 9);
             cout << "3.Exit" << endl;
+            gotoxy(25, 11);
             cout << "Enter your choice here (1-3): ";
             cin >> option;
             _getch();
