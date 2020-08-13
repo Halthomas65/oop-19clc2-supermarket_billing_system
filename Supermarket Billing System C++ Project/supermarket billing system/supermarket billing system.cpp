@@ -1,13 +1,3 @@
-<<<<<<< Updated upstream
-#include<iostream>
-#include<windows.h>
-#include<conio.h>
-#include<fstream>
-#include<cstring>
-#include<cstdio>
-#include<cstdlib>
-#include<iomanip>
-=======
 #define _CRT_SECURE_NO_WARNINGS 
 #include <iostream>
 #include <windows.h>
@@ -20,7 +10,6 @@
 #include <string>
 #include <ctime>
 #include <vector>
->>>>>>> Stashed changes
 using namespace std;
 //global variable declaration
 int k = 7, r = 0, flag = 0;
@@ -33,10 +22,10 @@ void gotoxy(int x, int y)
     coord.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
-struct date
-{
-    int mm,dd,yy;
-};
+//struct time
+//{
+//    int mm,dd,yy;
+//};
 
 ofstream fout;
 ifstream fin;
@@ -75,6 +64,17 @@ public:
     }
 };
 
+Time::Time() {
+    time_t now = time(0);
+    tm* t = localtime(&now);
+    this->year = 1900 + t->tm_year;
+    this->month = 1 + t->tm_mon;
+    this->day = t->tm_mday;
+    this->hour = t->tm_hour;
+    this->min = t->tm_min;
+    this->sec = t->tm_sec;
+}
+
 class Tokenizer
 {
 public:
@@ -100,43 +100,26 @@ vector<string> Tokenizer::split(string haystack, string needle) {
     return tokens;
 }
 
-Time::Time() {
-    time_t now = time(0);
-    tm* t = localtime(&now);
-    this->year = 1900 + t->tm_year;
-    this->month = 1 + t->tm_mon;
-    this->day = t->tm_mday;
-    this->hour = t->tm_hour;
-    this->min = t->tm_min;
-    this->sec = t->tm_sec;
-}
-
 class item 
 {
     int itemno;
     char name[25];
-    date d;
+    char* Time;
 public:
+    char* getTime()
+    {
+        // tra ve date/time hien tai dua tren system hien tai
+        time_t hientai = time(0);
+
+        // chuyen doi hientai thanh dang chuoi
+        char* dt = ctime(&hientai);
+
+        cout << "Time of Bill: " << dt << endl;
+
+        return dt;
+    }
     void add()
     {
-<<<<<<< Updated upstream
-        cout<<"\n\n\tItem No: ";
-        cin>>itemno;
-        cout<<"\n\n\tName of the item: ";
-        cin>>name;
-//gets(name);
-        cout<<"\n\n\tManufacturing Date(dd-mm-yy): ";
-        cin>>d.mm>>d.dd>>d.yy;
-    }
-    void show()
-    {
-        cout<<"\n\tItem No: ";
-        cout<<itemno;
-        cout<<"\n\n\tName of the item: ";
-        cout<<name;
-        cout<<"\n\n\tDate : ";
-        cout<<d.mm<<"-"<<d.dd<<"-"<<d.yy;
-=======
         cout << "\n\n\tItem No: ";
         cin >> itemno;
         cin.ignore();
@@ -153,7 +136,6 @@ public:
         cout << "\n\n\tName of the item: ";
         cout << name;
         cout << "\n\n\tTime: " << Time << endl;
->>>>>>> Stashed changes
     }
     void report()
     {
