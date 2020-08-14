@@ -22,10 +22,6 @@ void gotoxy(int x, int y)
     coord.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
-//struct time
-//{
-//    int mm,dd,yy;
-//};
 
 ofstream fout;
 ifstream fin;
@@ -64,41 +60,11 @@ public:
     }
 };
 
-Time::Time() {
-    time_t now = time(0);
-    tm* t = localtime(&now);
-    this->year = 1900 + t->tm_year;
-    this->month = 1 + t->tm_mon;
-    this->day = t->tm_mday;
-    this->hour = t->tm_hour;
-    this->min = t->tm_min;
-    this->sec = t->tm_sec;
-}
-
 class Tokenizer
 {
 public:
     static vector<string> split(string haystack, string needle);
 };
-
-vector<string> Tokenizer::split(string haystack, string needle) {
-    vector<string> tokens;
-    int startPosition = 0;
-    while (true) {
-        size_t position = haystack.find(needle, startPosition);
-        if (position != string::npos) {
-            string token = haystack.substr(startPosition, position - startPosition);
-            startPosition = position + needle.length();
-            tokens.push_back(token);
-        }
-        else {
-            string token = haystack.substr(startPosition, haystack.length());
-            tokens.push_back(token);
-            break;
-        }
-    }
-    return tokens;
-}
 
 class feedback {
 private:
@@ -204,6 +170,7 @@ public:
         return fbk.phone;
     }
 } fbk;
+
 class item
 {
     int itemno;
@@ -254,9 +221,23 @@ public:
     int retno()
     {
         return(itemno);
-
     }
-
+    string getName() {
+        string temp(name);
+        return temp;
+    }
+    void getInfo(vector<int> no, vector<string> name) {
+        for (int i = 0; i < no.size() - 1; i++) {
+            for (int j = i + 1; j < no.size(); j++) {
+                if (no[i] > no[j]) {
+                    swap(no[i], no[j]);
+                    swap(name[i], name[j]);
+                }
+            }
+        }
+        for (int i = 0; i < no.size(); i++)
+            cout << "\n\t\t\t" << no[i] << ". " << name[i];
+    }
 };
 
 class amount : public item
@@ -293,6 +274,7 @@ void amount::add()
     fout.write((char*)&amt, sizeof(amt));
     fout.close();
 }
+
 void amount::input()
 {
     item::add();
@@ -306,6 +288,7 @@ void amount::input()
     cin >> dis;
     calculate();
 }
+
 void amount::edit()
 {
     int ino;
@@ -364,6 +347,7 @@ void amount::edit()
     _getch();
     fout.close();
 }
+
 void amount::remove()
 {
     int ino;
@@ -412,16 +396,19 @@ void amount::remove()
 
 
 }
+
 void amount::removeAll()
 {
     fout.open("itemstore.dat", ios::binary);
     fout.close();
 }
+
 void amount::calculate()
 {
     gross = price + (price * (tax / 100));
     netamt = qty * (gross - (gross * (dis / 100)));
 }
+
 void amount::show()
 {
     fin.open("itemstore.dat", ios::binary);
@@ -499,6 +486,48 @@ public:
     void readFromFile(ifstream& in);
     void printScreen();
 };
+
+class Customer {
+private:
+    string name;
+    string phone_number;
+    int point;
+public:
+    void regis(string name, string phone);
+    vector<Customer> readFromFile(ifstream& in);
+    void writeToFile(ofstream& out, vector<Customer> customer);
+    void showDetail(vector<Customer> customer);
+};
+
+Time::Time() {
+    time_t now = time(0);
+    tm* t = localtime(&now);
+    this->year = 1900 + t->tm_year;
+    this->month = 1 + t->tm_mon;
+    this->day = t->tm_mday;
+    this->hour = t->tm_hour;
+    this->min = t->tm_min;
+    this->sec = t->tm_sec;
+}
+
+vector<string> Tokenizer::split(string haystack, string needle) {
+    vector<string> tokens;
+    int startPosition = 0;
+    while (true) {
+        size_t position = haystack.find(needle, startPosition);
+        if (position != string::npos) {
+            string token = haystack.substr(startPosition, position - startPosition);
+            startPosition = position + needle.length();
+            tokens.push_back(token);
+        }
+        else {
+            string token = haystack.substr(startPosition, haystack.length());
+            tokens.push_back(token);
+            break;
+        }
+    }
+    return tokens;
+}
 
 void Star::setValue(int x) {
     this->stars.push_back(x);
@@ -601,18 +630,6 @@ void Star::readFromFile(ifstream& in) {
     }
     in.close();
 }
-
-class Customer {
-private:
-    string name;
-    string phone_number;
-    int point;
-public:
-    void regis(string name, string phone);
-    vector<Customer> readFromFile(ifstream& in);
-    void writeToFile(ofstream& out, vector<Customer> customer);
-    void showDetail(vector<Customer> customer);
-};
 
 vector<Customer> Customer::readFromFile(ifstream& in) {
     vector<Customer> customer;
@@ -771,14 +788,44 @@ menu:
             _getch();
             goto db;
 
-        case 2:
+        case 2: {
+            vector<int> no;
+            vector<string> name;
+            cout << "\n\n\t\tList of item:" << endl;
+            fin.open("itemstore.dat", ios::binary);
+            while (fin.read((char*)&amt, sizeof(amt))) {
+                int x = amt.retno();
+                string temp = amt.getName();
+                no.push_back(x);
+                name.push_back(temp);
+            }
+            if (no.size() != 0)
+                amt.getInfo(no, name);
+            else
+                cout << "\n\t\t\tEmpty list";
+            fin.close();
             amt.edit();
             goto db;
-
-        case 3:
+        }
+        case 3: {
+            vector<int> no;
+            vector<string> name;
+            cout << "\n\n\t\tList of item:" << endl;
+            fin.open("itemstore.dat", ios::binary);
+            while (fin.read((char*)&amt, sizeof(amt))) {
+                int x = amt.retno();
+                string temp = amt.getName();
+                no.push_back(x);
+                name.push_back(temp);
+            }
+            if (no.size() != 0)
+                amt.getInfo(no, name);
+            else
+                cout << "\n\t\t\tEmpty list";
+            fin.close();
             amt.remove();
             goto db;
-
+        }
         case 4:
             amt.removeAll();
             goto db;
@@ -789,10 +836,25 @@ menu:
             _getch();
             goto db;
         }
-    case 3:
+    case 3: {
         system("cls");
         flag = 0;
         int ino;
+        vector<int> no;
+        vector<string> names;
+        cout << "\n\n\t\tList of item:" << endl;
+        fin.open("itemstore.dat", ios::binary);
+        while (fin.read((char*)&amt, sizeof(amt))) {
+            int x = amt.retno();
+            string temp = amt.getName();
+            no.push_back(x);
+            names.push_back(temp);
+        }
+        if (no.size() != 0)
+            amt.getInfo(no, names);
+        else
+            cout << "\n\t\t\tEmpty list";
+        fin.close();
         cout << "\n\n\t\tEnter Item Number :";
         cin >> ino;
         fin.open("itemstore.dat", ios::binary);
@@ -817,6 +879,7 @@ menu:
         _getch();
         fin.close();
         goto menu;
+    }
     case 4:
     ch:
         system("cls");
