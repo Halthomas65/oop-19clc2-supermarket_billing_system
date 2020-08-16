@@ -208,6 +208,115 @@ public:
     }
 } amt;
 
+class account {
+protected:
+    char userName[20];
+    char password[8];
+    int type;//1: Staff, 2: manager
+public:
+    static vector<account> loadAccount()
+    {
+        vector<account> tmp_acc;
+        fin.open("accountstore.txt", ios::binary);
+
+        if (!fin.is_open())
+        {
+            cout << "\n\nFile Not Found...";
+            return tmp_acc;
+        }
+        while (fin.read((char*)&acc, sizeof(acc)))
+        {
+            tmp_acc.push_back(acc);
+        }
+        fin.close();
+        return tmp_acc;
+    }
+    int login(vector<account> vt)
+    {
+        do {
+            cout << "\n\n\tEnter user name: ";
+            //cin.ignore();
+            cin.getline(this->userName, 20);
+            cout << "\n\n\tEnter password: ";
+            cin.getline(this->password, 8);
+            bool flag = false;
+            for (int i = 0; i < vt.size(); i++)
+            {
+                if (strcmp(this->userName,vt[i].getUserName())==0 && strcmp(this->password, vt[i].getPasswoed()) == 0)
+                {
+                    flag = true;
+                    this->type = vt[i].getType();
+                    break;
+                }
+            }
+            if (flag == true)
+            {
+                cout << "\n\n\t\tLogin successfully";
+                return this->type;
+            }
+            if (flag == false)
+            {
+                cout << "\n\n\t1. Try again.";
+                cout << "\n\n\t2. Exit.";
+                int op;
+                cout << "\n\n\tYour option: ";
+                cin >> op;
+                cin.ignore();
+                if(op==1)
+                { }
+                if (op == 2)
+                    return -1;  
+            }
+        } while (true);
+    }
+    char* getUserName()
+    {
+        return this->userName;
+    }
+    char* getPasswoed()
+    {
+        return this->password;
+    }
+    int getType()
+    {
+        return this->type;
+    }
+    void addAccount()
+    {
+        if (this->type != 2)
+        {
+            cout << "\n\n\tThis task is not yours !!!";
+            return;
+        }
+        else {
+            vector<account> tmp_acc = account::loadAccount();
+            string userName, password;
+            int type;
+            cout << "\n\n\tEnter user name: ";
+            cin >> userName;
+            cout << "\n\n\tEnter password: ";
+            cin >> password;
+            cout << "\n\n\tEnter type: ";
+            cin >> type;
+            fout.open("accountstore.txt",ios::binary);
+            account acc1;
+            acc1.setAccount(userName, password, type);
+            tmp_acc.push_back(acc1);
+            for (int i = 0; i < tmp_acc.size(); i++)
+            {
+                fout.write((char*)&tmp_acc[i], sizeof(acc));
+            }
+            fout.close();
+        }
+    }
+    void setAccount(string userName, string password, int type)
+    {
+        strcpy(this->userName,userName.c_str());
+        strcpy(this->password, password.c_str());
+        this->type = type;
+    }
+} acc;
+
 void amount::add()
 {
     item::add();
@@ -421,7 +530,47 @@ int main()
     cout.setf(ios::fixed);
     cout.setf(ios::showpoint);
     cout<<setprecision(2);
-    fstream tmp("temp.dat",ios::binary|ios::out);
+login:
+    int type;
+    gotoxy(25, 2);
+    /*acc.setAccount("vodinhphuc", "20092001", 2);
+    acc.addAccount();*/
+    cout << "Please, login here...";
+    type = acc.login(account::loadAccount());
+    if (type == 1)
+    {
+        fstream tmp("temp.dat", ios::binary | ios::out);
+        goto menu;
+    }
+    if (type == 2)
+    {
+    manager:
+        cout << "\n\n\t1. Add Account.";
+        cout << "\n\n\t2. Return.";
+        cout << "Your Choice: ";
+        int opt;
+        cin >> opt;
+        if (opt == 2)
+            goto login;
+        acc.addAccount();
+        cout << "\n\n\t1. Logout";
+        cout << "\n\n\t2. Login with another.";
+        cout << "\n\n\t3. Return";
+        int op;
+        cout << "Your choice: ";
+        cin >> op;
+        cin.ignore();
+        if (op == 1)
+            return 0;
+        if (op == 2)
+            goto login;
+        if (op == 3)
+            goto manager;
+        system("cls");
+    }
+    else
+        return 0;
+    
 menu:
     system("cls");
     gotoxy(25,2);
