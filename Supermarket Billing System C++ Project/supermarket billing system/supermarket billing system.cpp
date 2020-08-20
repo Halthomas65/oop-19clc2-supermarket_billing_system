@@ -234,8 +234,8 @@ public:
     int login(vector<account> vt)
     {
         do {
+            
             cout << "\n\n\tEnter user name: ";
-            //cin.ignore();
             cin.getline(this->userName, 20);
             cout << "\n\n\tEnter password: ";
             cin.getline(this->password, 8);
@@ -256,16 +256,19 @@ public:
             }
             if (flag == false)
             {
+                cout << "\n\n\t\tFailed....";
                 cout << "\n\n\t1. Try again.";
                 cout << "\n\n\t2. Exit.";
                 int op;
                 cout << "\n\n\tYour option: ";
                 cin >> op;
                 cin.ignore();
-                if(op==1)
-                { }
                 if (op == 2)
                     return -1;  
+                if (op == 1)
+                {
+                    system("cls");
+                }
             }
         } while (true);
     }
@@ -531,6 +534,7 @@ int main()
     cout.setf(ios::showpoint);
     cout<<setprecision(2);
 login:
+    system("cls");
     int type;
     gotoxy(25, 2);
     /*acc.setAccount("vodinhphuc", "20092001", 2);
@@ -550,6 +554,7 @@ login:
         cout << "Your Choice: ";
         int opt;
         cin >> opt;
+        cin.ignore();
         if (opt == 2)
             goto login;
         acc.addAccount();
