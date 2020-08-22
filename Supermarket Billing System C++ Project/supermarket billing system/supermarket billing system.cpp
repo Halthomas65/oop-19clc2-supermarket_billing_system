@@ -60,6 +60,17 @@ public:
     }
 };
 
+class Random {
+public:
+    Random() {
+        srand(time(NULL));
+    }
+    int next(int a, int b) {
+        int delta = b - a + 1;
+        return a + rand() % delta;
+    }
+};
+
 class Tokenizer
 {
 public:
@@ -497,6 +508,20 @@ public:
     vector<Customer> readFromFile(ifstream& in);
     void writeToFile(ofstream& out, vector<Customer> customer);
     void showDetail(vector<Customer> customer);
+    bool isAccount(ifstream& in, string name, string phone);
+};
+
+class Game {
+private:
+    vector<int> value;
+    int num;
+    Random rng;
+public:
+    Game();
+    void show();
+    void setValue(int x);
+    bool isSame();
+    int getValue(int x);
 };
 
 Time::Time() {
@@ -683,6 +708,50 @@ void Customer::showDetail(vector<Customer> customer) {
         cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << endl;
 }
 
+bool Customer::isAccount(ifstream& in, string name, string phone) {
+    vector<Customer> customer = readFromFile(in);
+    for (int i = 0; i < customer.size(); i++) {
+        if (name == customer[i].name && phone == customer[i].phone_number)
+            return true;
+    }
+    return false;
+}
+
+Game::Game() {
+    vector<int> percent = { 10,10,10,10,20,20,20,30,30,50 };
+    int size = 9;
+    while (percent.size() != 0) {
+        int i = this->rng.next(0, size);
+        this->value.push_back(percent[i]);
+        percent.erase(percent.begin() + i);
+        size--;
+    }
+}
+
+void Game::setValue(int x) {
+    this->num = x;
+}
+
+bool Game::isSame() {
+    int x = this->rng.next(0, 9);
+    if (this->num == x)
+        return true;
+    gotoxy(25, 3);
+    cout << "\n\t\tRandom number: " << x << endl;
+    return false;
+}
+
+int Game::getValue(int x) {
+    return this->value[x - 1];
+}
+
+void Game::show() {
+    for (int i = 0; i < this->value.size(); i++)
+        cout << this->value[i] << "%  ";
+}
+
+#include "Header.h"
+
 int main()
 {
     cout.setf(ios::fixed);
@@ -700,7 +769,8 @@ menu:
     cout << "\t\t3.Show Item Details\n\n";
     cout << "\t\t4.Feed back\n\n";
     cout << "\t\t5.Register\n\n";
-    cout << "\t\t6.Exit\n\n";
+    cout << "\t\t6.Service Customer\n\n";
+    cout << "\t\t7.Exit\n\n";
     cout << "\t\tPlease Enter Required Option: ";
     int ch, ff;
     float gtotal;
@@ -901,7 +971,6 @@ menu:
         case 2:
             fbk.showFeedback();
             goto ch;
-
         case 3:
             fbk.removeFeedback();
             goto ch;
@@ -951,6 +1020,159 @@ menu:
         goto menu;
     }
     case 6: {
+        system("cls");
+        gotoxy(25, 3);
+        cin.ignore(1);
+        cout << "\n\t\tPlease enter name and phone number to check your account is registered" << endl;
+        cout << "\n\t\tEnter name: ";
+        string name;
+        getline(cin, name);
+        cout << "\n\t\tEnter phone number: ";
+        string num;
+        getline(cin, num);
+        system("cls");
+        ifstream in;
+        Customer res;
+        if (res.isAccount(in, name, num)) {
+            gotoxy(25, 3);
+            cout << "\n\t\tYou can access to this feature";
+            _getch();
+            system("cls");
+        }
+        else {
+            gotoxy(25, 3);
+            cout << "\n\t\tYou must have a account to access to this feature" << endl;
+            cout << "\n\t\tPlease choose number 5 to register account";
+            _getch();
+            goto menu;
+        }
+    }
+    yy:{
+        gotoxy(25, 3);
+        cout << "\n\t\t1.Lucky bill" << endl;
+        cout << "\n\t\t4.Back to menu" << endl;
+        cout << "\n\t\tEnter your choice: ";
+        int option;
+        cin >> option;
+        switch (option) {
+        case 1: {
+            system("cls");
+            fin.open("itemstore.dat", ios::binary);
+            float total = 0;
+            while (fin.read((char*)&amt, sizeof(amt)))
+                total += amt.retnetamt();
+            fin.close();
+            gotoxy(25, 3);
+            if (total >= 100000) {
+                cout << "\n\t\tYour grand total is: " << total << endl;
+                cout << "\n\t\tYou can play a minigame to decrease your bill" << endl;
+                cout << "\n\t\tAlthough you can decrease your bill, your accumulate point can change" << endl;
+                cout << "\n\t\tDo you want to play?" << endl;
+                cout << "\n\t\t1.YES              2.NO" << endl;
+                cout << "\n\t\tEnter your choice: ";
+                int choice;
+                cin >> choice;
+                if (choice == 1) {
+                    system("cls");
+                    cout << "\n\t\t1.Play" << endl;
+                    cout << "\n\t\t2.Show help" << endl;
+                    int op;
+                    cout << "\n\t\tEnter your choice: " << endl;
+                    cin >> op;
+                    while (op != 1) {
+                        system("cls");
+                        gotoxy(25, 3);
+                        cout << "\n\t\tEach bill has a value" << endl;
+                        cout << "\n\t\tIf this value % 10, we have a number from 0-9" << endl;
+                        cout << "\n\t\tThe system will random a number from 0-9" << endl;
+                        cout << "\n\t\tIf they have same value, your bill will descrease" << endl;
+                        cout << "\n\t\tOtherwise, you lose this game" << endl;
+                        _getch();
+                        system("cls");
+                        cout << "\n\t\t1.Play" << endl;
+                        cout << "\n\t\t2.Show help" << endl;
+                        cout << "\n\t\tEnter your choice: " << endl;
+                        cin >> op;
+                    }
+                    system("cls");
+                    Game game;
+                    game.setValue((int)total % 10);
+                    if (game.isSame()) {
+                        gotoxy(25, 3);
+                        cout << "\n\t\tCongratulation!!!!You win this game!!!" << endl;
+                        cout << "\n\t\tAnd your bill will descrease a secret value" << endl;
+                        cout << "\n\t\tTo find it, you need to choose a number from 1-10" << endl;
+                        cout << "\n\t\tThis system include 10 value: 4(10%), 3(20%), 2(30%) and 1(50%)" << endl;
+                        cout << "\n\t\tWith 1-10 we have a different value" << endl;
+                        cout << "\n\t\tEnter your choice: ";
+                        int op1;
+                        cin >> op1;
+                        int percent = game.getValue(op1);
+                        _getch();
+                        system("cls");
+                        gotoxy(25, 3);
+                        cout << "\n\t\tYour bill decrease " << percent << "%" << endl;
+                        cout << "\n\t\tList of value: " << endl;
+                        cout << "\n\t\t";
+                        game.show();
+                        _getch();
+                        system("cls");
+                        total = total - total * percent / 100.0;
+                        gotoxy(30, 3);
+                        cout << " BILL DETAILS ";
+                        gotoxy(3, 5);
+                        cout << "ITEM NO";
+                        gotoxy(13, 5);
+                        cout << "NAME";
+                        gotoxy(23, 5);
+                        cout << "PRICE";
+                        gotoxy(33, 5);
+                        cout << "QUANTITY";
+                        gotoxy(44, 5);
+                        cout << "TAX %";
+                        gotoxy(52, 5);
+                        cout << "DISCOUNT %";
+                        gotoxy(64, 5);
+                        cout << "NET AMOUNT";
+                        fin.open("itemstore.dat", ios::binary);
+                        while (fin.read((char*)&amt, sizeof(amt)))
+                        {
+                            amt.report();
+                            ff = 0;
+                        }
+                        gotoxy(17, k);
+                        cout << "\n\n\n\t\t\tGrand Total = " << total << " (decrease " << percent << "%)";
+                        fin.close();
+                        _getch();
+                        system("cls");
+                        goto yy;
+                    }
+                    else {
+                        cout << "\n\t\tYour number: " << (int)total % 10 << endl;
+                        cout << "\n\t\tYou lose this game!!!Good luck again" << endl;
+                        _getch();
+                        system("cls");
+                        goto yy;
+                    }
+                }
+                else {
+                    system("cls");
+                    goto yy;
+                }
+            }
+            else {
+                cout << "\n\t\tYour grand total is smaller than 100K" << endl;
+                cout << "\n\t\tIf you want to play minigame, you need to cost " << 100000 - total << endl;
+                _getch();
+                system("cls");
+                goto yy;
+            }
+        }
+        case 4:
+            goto menu;
+        }
+    }
+    case 7: {
         system("cls");
         ifstream in;
         ofstream out;
