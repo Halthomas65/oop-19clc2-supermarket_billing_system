@@ -504,11 +504,15 @@ private:
     string phone_number;
     int point;
 public:
+    int getPoint();
     void regis(string name, string phone);
+    bool operator==(const Customer& p);
+    void setCustomer(string name, string phone);
     vector<Customer> readFromFile(ifstream& in);
     void writeToFile(ofstream& out, vector<Customer> customer);
     void showDetail(vector<Customer> customer);
     bool isAccount(ifstream& in, string name, string phone);
+    void accumulatePoint(float total);
 };
 
 class Game {
@@ -517,9 +521,10 @@ private:
     int num;
     Random rng;
 public:
+    void setNum(float total);
+    int getNum();
     Game();
     void show();
-    void setValue(int x);
     bool isSame();
     int getValue(int x);
 };
@@ -656,6 +661,12 @@ void Star::readFromFile(ifstream& in) {
     in.close();
 }
 
+bool Customer::operator==(const Customer& p) {
+    if (this->name == p.name && this->phone_number == p.phone_number)
+        return true;
+    return false;
+}
+
 vector<Customer> Customer::readFromFile(ifstream& in) {
     vector<Customer> customer;
     in.open("customer.txt");
@@ -673,6 +684,10 @@ vector<Customer> Customer::readFromFile(ifstream& in) {
     }
     in.close();
     return customer;
+}
+
+int Customer::getPoint() {
+    return this->point;
 }
 
 void Customer::regis(string name, string phone) {
@@ -717,6 +732,20 @@ bool Customer::isAccount(ifstream& in, string name, string phone) {
     return false;
 }
 
+void Customer::setCustomer(string name, string phone) {
+    this->name = name;
+    this->phone_number = phone;
+}
+
+void Customer::accumulatePoint(float total) {
+    if (total >= 1000000)
+        this->point += 3;
+    else if (total >= 500000)
+        this->point += 2;
+    else
+        this->point++;
+}
+
 Game::Game() {
     vector<int> percent = { 10,10,10,10,20,20,20,30,30,50 };
     int size = 9;
@@ -728,8 +757,14 @@ Game::Game() {
     }
 }
 
-void Game::setValue(int x) {
-    this->num = x;
+void Game::setNum(float total) {
+    int t = int(total);
+    while (t != 0) {
+        this->num = t % 10;
+        if (this->num != 0)
+            break;
+        t = t / 10;
+    }
 }
 
 bool Game::isSame() {
@@ -739,6 +774,10 @@ bool Game::isSame() {
     gotoxy(25, 3);
     cout << "\n\t\tRandom number: " << x << endl;
     return false;
+}
+
+int Game::getNum() {
+    return this->num;
 }
 
 int Game::getValue(int x) {
@@ -773,7 +812,9 @@ menu:
     cout << "\t\t7.Exit\n\n";
     cout << "\t\tPlease Enter Required Option: ";
     int ch, ff;
-    float gtotal;
+    float gtotal = 0, total = 0;
+    bool flag = true;
+    Customer cus;
     cin >> ch;
     switch (ch)
     {
@@ -1032,9 +1073,10 @@ menu:
         getline(cin, num);
         system("cls");
         ifstream in;
-        Customer res;
-        if (res.isAccount(in, name, num)) {
+        if (cus.isAccount(in, name, num)) {
             gotoxy(25, 3);
+            flag = true;
+            cus.setCustomer(name, num);
             cout << "\n\t\tYou can access to this feature";
             _getch();
             system("cls");
@@ -1050,6 +1092,7 @@ menu:
     yy:{
         gotoxy(25, 3);
         cout << "\n\t\t1.Lucky bill" << endl;
+        cout << "\n\t\t2.Accumulate point" << endl;
         cout << "\n\t\t4.Back to menu" << endl;
         cout << "\n\t\tEnter your choice: ";
         int option;
@@ -1058,7 +1101,7 @@ menu:
         case 1: {
             system("cls");
             fin.open("itemstore.dat", ios::binary);
-            float total = 0;
+            total = 0;
             while (fin.read((char*)&amt, sizeof(amt)))
                 total += amt.retnetamt();
             fin.close();
@@ -1083,8 +1126,8 @@ menu:
                         system("cls");
                         gotoxy(25, 3);
                         cout << "\n\t\tEach bill has a value" << endl;
-                        cout << "\n\t\tIf this value % 10, we have a number from 0-9" << endl;
-                        cout << "\n\t\tThe system will random a number from 0-9" << endl;
+                        cout << "\n\t\tIf this value % 10 until we have a number from 1-9" << endl;
+                        cout << "\n\t\tThe system will random a number from 1-9" << endl;
                         cout << "\n\t\tIf they have same value, your bill will descrease" << endl;
                         cout << "\n\t\tOtherwise, you lose this game" << endl;
                         _getch();
@@ -1096,7 +1139,7 @@ menu:
                     }
                     system("cls");
                     Game game;
-                    game.setValue((int)total % 10);
+                    game.setNum(total);
                     if (game.isSame()) {
                         gotoxy(25, 3);
                         cout << "\n\t\tCongratulation!!!!You win this game!!!" << endl;
@@ -1148,7 +1191,7 @@ menu:
                         goto yy;
                     }
                     else {
-                        cout << "\n\t\tYour number: " << (int)total % 10 << endl;
+                        cout << "\n\t\tYour number: " << game.getNum() << endl;
                         cout << "\n\t\tYou lose this game!!!Good luck again" << endl;
                         _getch();
                         system("cls");
@@ -1167,6 +1210,51 @@ menu:
                 system("cls");
                 goto yy;
             }
+        }
+        case 2: {
+            system("cls");
+            if (flag == false) {
+                gotoxy(25, 3);
+                cout << "\n\t\tYour point was updated" << endl;
+                _getch();
+                system("cls");
+                goto yy;
+            }
+            fin.open("itemstore.dat", ios::binary);
+            gtotal = 0;
+            while (fin.read((char*)&amt, sizeof(amt)))
+                gtotal += amt.retnetamt();
+            fin.close();
+            if (total == 0)
+                total = gtotal;
+            gotoxy(25, 3);
+            if (total < 100000) {
+                cout << "\n\t\tYour bill is " << total << endl;
+                cout << "\n\t\tTo use this feature, you need bill greater 100K" << endl;
+                cout << "\n\t\tYou need " << 100000 - total << " to use" << endl;
+            }
+            else {
+                ifstream in;
+                ofstream out;
+                float opoint, npoint;
+                vector<Customer> res = cus.readFromFile(in);
+                for (int i = 0; i < res.size(); i++) {
+                    if (cus == res[i]) {
+                        opoint = res[i].getPoint();
+                        res[i].accumulatePoint(total);
+                        npoint = res[i].getPoint();
+                        break;
+                    }
+                }
+                cus.writeToFile(out, res);
+                cout << "\n\t\tUpdate point successfully" << endl;
+                cout << "\n\t\tOld point: " << opoint << endl;
+                cout << "\n\t\tNew point: " << npoint << endl;
+                flag = false;
+            }
+            _getch();
+            system("cls");
+            goto yy;
         }
         case 4:
             goto menu;
