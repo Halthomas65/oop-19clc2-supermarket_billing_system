@@ -504,6 +504,7 @@ private:
     string phone_number;
     int point;
 public:
+    void setPoint(int point);
     int getPoint();
     void regis(string name, string phone);
     bool operator==(const Customer& p);
@@ -527,6 +528,18 @@ public:
     void show();
     bool isSame();
     int getValue(int x);
+};
+
+class Product {
+private:
+    string name;
+    int point;
+public:
+    static vector<Product> readFromFile(ifstream& in);
+    static void showList(vector<Product> pro);
+    static void showList(vector<Product> pro, int max);
+    int getPoint();
+    string getName();
 };
 
 Time::Time() {
@@ -686,6 +699,10 @@ vector<Customer> Customer::readFromFile(ifstream& in) {
     return customer;
 }
 
+void Customer::setPoint(int point) {
+    this->point = point;
+}
+
 int Customer::getPoint() {
     return this->point;
 }
@@ -787,6 +804,44 @@ int Game::getValue(int x) {
 void Game::show() {
     for (int i = 0; i < this->value.size(); i++)
         cout << this->value[i] << "%  ";
+}
+
+vector<Product> Product::readFromFile(ifstream& in) {
+    vector<Product> res;
+    in.open("product.txt");
+    while (!in.eof()) {
+        string temp;
+        Product pro;
+        getline(in, temp);
+        if (temp.size() == 0)
+            break;
+        vector<string> tokens = Tokenizer::split(temp, " : ");
+        pro.name = tokens[0];
+        pro.point = stoi(tokens[1]);
+        res.push_back(pro);
+    }
+    in.close();
+    return res;
+}
+
+void Product::showList(vector<Product> pro) {
+    for (int i = 0; i < pro.size(); i++) 
+        cout << i + 1 << "." << pro[i].name << " : " << pro[i].point << " point" << endl;
+}
+
+void Product::showList(vector<Product> pro, int max) {
+    for (int i = 0; i < pro.size(); i++) {
+        if (pro[i].point <= max)
+            cout << "\n\t\t" << i + 1 << "." << pro[i].name << " : " << pro[i].point << " point" << endl;
+    }
+}
+
+int Product::getPoint() {
+    return this->point;
+}
+
+string Product::getName() {
+    return this->name;
 }
 
 #include "Header.h"
@@ -1093,6 +1148,7 @@ menu:
         gotoxy(25, 3);
         cout << "\n\t\t1.Lucky bill" << endl;
         cout << "\n\t\t2.Accumulate point" << endl;
+        cout << "\n\t\t3.Use point" << endl;
         cout << "\n\t\t4.Back to menu" << endl;
         cout << "\n\t\tEnter your choice: ";
         int option;
@@ -1255,6 +1311,140 @@ menu:
             _getch();
             system("cls");
             goto yy;
+        }
+        case 3: {
+            system("cls");
+        aa: {
+            gotoxy(25, 3);
+            cout << "\n\t\t1.View list product" << endl;
+            cout << "\n\t\t2.Buy product" << endl;
+            cout << "\n\t\t3.Back" << endl;
+            cout << "\n\t\tEnter your choice: ";
+            }
+            int op;
+            cin >> op;
+            switch (op) {
+            case 1: {
+                system("cls");
+                ifstream in;
+                vector<Product> pro = Product::readFromFile(in);
+                Product::showList(pro);
+                _getch();
+                system("cls");
+                goto aa;
+            }
+            case 2: {
+                system("cls");
+                int point;
+                ifstream in;
+                vector<Customer> res = cus.readFromFile(in);
+                for (int i = 0; i < res.size(); i++) {
+                    if (cus == res[i]) {
+                        point = res[i].getPoint();
+                        break;
+                    }
+                }
+                if (point == 0) {
+                    cout << "\n\t\tYour point is 0" << endl;
+                    cout << "\n\t\tYou need more point to buy" << endl;
+                    _getch();
+                    system("cls");
+                    goto yy;
+                }
+                gotoxy(25, 3);
+                cout << "\n\t\tYour point: " << point << endl << endl;
+                cout << "\n\t\t\t\tLIST PRODUCT YOU CAN BUY WITH THIS POINT" << endl;
+                gotoxy(25, 9);
+                vector<Product> pro = Product::readFromFile(in);
+                Product::showList(pro, point);
+                cout << "\n\t\tEnter position of product you want to buy: ";
+                int pos, quantity;
+                cin >> pos;
+                cout << "\n\t\tEnter quantity of this product: ";
+                cin >> quantity;
+                vector<Product> final;
+                vector<int> size;
+                while (true) {
+                    system("cls");
+                    gotoxy(25, 3);
+                    point -= pro[pos - 1].getPoint() * quantity;
+                    if (point < 0) {
+                        cout << "\n\t\tYour point is not enough" << endl;
+                        cout << "\n\t\tYou need to descrease this product's quantity" << endl; 
+                        point += pro[pos - 1].getPoint() * quantity;
+                    }
+                    else {
+                        cout << "\n\t\tBuy product successfully" << endl;
+                        if (final.size() == 0) {
+                            final.push_back(pro[pos - 1]);
+                            size.push_back(quantity);
+                        }
+                        else {
+                            bool flag1 = true;
+                            for (int i = 0; i < final.size(); i++) {
+                                if (final[i].getName() == pro[pos - 1].getName()) {
+                                    size[i] += quantity;
+                                    flag1 = false;
+                                    break;
+                                }
+                            }
+                            if (flag1 == true) {
+                                final.push_back(pro[pos - 1]);
+                                size.push_back(quantity);
+                            }
+                        }
+                        if (point == 0) {
+                            cout << "\n\t\tYour point is: 0" << endl;
+                            cout << "\n\t\tYou need more point to continue buying" << endl;
+                            cout << "\n\t\tThank you for buying" << endl;
+                            _getch();
+                            break;
+                        }
+                    }
+                    cout << "\n\t\tDo you want to continue buying?" << endl;
+                    cout << "\n\t\t1.YES              2.NO" << endl;
+                    int op1;
+                    cout << "\n\t\tEnter your choice: ";
+                    cin >> op1;
+                    if (op1 == 2)
+                        break;
+                    _getch();
+                    system("cls");
+                    gotoxy(25, 3);
+                    cout << "\n\t\tYour point: " << point << endl << endl;
+                    cout << "\n\t\t\t\tLIST PRODUCT YOU CAN BUY WITH THIS POINT" << endl;
+                    gotoxy(25, 9);
+                    vector<Product> pro = Product::readFromFile(in);
+                    Product::showList(pro, point);
+                    cout << "\n\t\tEnter position of product you want to buy: ";
+                    cin >> pos;
+                    cout << "\n\t\tEnter quantity of this product: ";
+                    cin >> quantity;
+                }
+                system("cls");
+                gotoxy(25, 3);
+                cout << "\n\t\t\t\tBILL DETAIL" << endl;
+                cout << "\n\tITEM NO        NAME        POINT      QUANTITY" << endl;
+                for (int i = 0; i < final.size(); i++) {
+                    cout << "\n\t" << i + 1 << "              " << final[i].getName() << "        " << final[i].getPoint() << "             " << size[i] << endl;
+                }
+                for (int i = 0; i < res.size(); i++) {
+                    if (cus == res[i]) {
+                        res[i].setPoint(point);
+                        break;
+                    }
+                }
+                ofstream out;
+                cus.writeToFile(out, res);
+                _getch();
+                system("cls");
+                goto aa;
+            }
+            case 3: {
+                system("cls");
+                goto yy;
+            }
+            }
         }
         case 4:
             goto menu;
