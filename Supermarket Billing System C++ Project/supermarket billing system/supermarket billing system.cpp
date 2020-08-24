@@ -31,6 +31,8 @@ private:
     int day, month, year, hour, min, sec;
 public:
     Time();
+    static void writeToFile(ofstream& out, int year); //ghi file year.txt
+    static int readFromFile(ifstream& in); //doc file year.txt
     void setYear(int year) {
         this->year = year;
     }
@@ -486,34 +488,52 @@ void amount::pay()
 
 class Star {
 private:
-    vector<int> stars;
-    vector<Time> time;
-    vector<int> quantity;
+    vector<int> stars; //chua so luong sao
+    vector<Time> time; //chua thoi gian vote
+    vector<int> quantity; //so luong sao vote trong ngay
 public:
-    float calcAvg();
-    void setValue(int x);
-    static int convertStar(string s);
-    void writeToFile(ofstream& out, string s, ifstream& in);
-    void readFromFile(ifstream& in);
-    void printScreen();
+    float calcAvg(); //tinh trung binh
+    void setValue(int x); 
+    static int convertStar(string s); //chuyen tu string sang int
+    void writeToFile(ofstream& out, string s, ifstream& in); //ghi file star.txt
+    void readFromFile(ifstream& in); //doc file star.txt
+    void printScreen(); //in ra man hinh
 };
 
 class Customer {
-private:
+protected:
     string name;
     string phone_number;
     int point;
+    float money;
 public:
     void setPoint(int point);
     int getPoint();
-    void regis(string name, string phone);
+    float getMoney();
+    string getName();
+    string getPhone();
+    void showDetail(); //show thong tin
+    void setMoney(float money);
+    void updateMoney(float money); //cap nhat tien
+    void regis(string name, string phone); //dang ky tai khoan
     bool operator==(const Customer& p);
     void setCustomer(string name, string phone);
-    vector<Customer> readFromFile(ifstream& in);
-    void writeToFile(ofstream& out, vector<Customer> customer);
-    void showDetail(vector<Customer> customer);
-    bool isAccount(ifstream& in, string name, string phone);
-    void accumulatePoint(float total);
+    vector<Customer> readFromFile(ifstream& in); //doc file customer.txt
+    Customer findBestCustomer(ifstream& in); //tim khach hang tot nhat
+    void writeToFile(ofstream& out, vector<Customer> customer); //ghi file customer.txt
+    void showDetail(vector<Customer> customer); //show thong tin danh sach khach hang
+    bool isAccount(ifstream& in, string name, string phone); //kiem tra tai khoan dang ky chua
+    void accumulatePoint(float total); //cap nhat diem tich luy
+};
+
+class BestCustomer : public Customer {
+private:
+    int year;
+public:
+    static vector<BestCustomer> readFromFile(ifstream& in); //doc file best customer.txt
+    static void writeToFile(ofstream& out, vector<BestCustomer> customer); //ghi file customer.txt
+    static void showDetail(vector<BestCustomer> customer); // show thong tin 
+    BestCustomer convert(Customer cus, int year); //chuyen tu customer sang best customer
 };
 
 class Game {
@@ -524,9 +544,9 @@ private:
 public:
     void setNum(float total);
     int getNum();
-    Game();
-    void show();
-    bool isSame();
+    Game(); //thiet lap mang gia tri
+    void show();//show mang gia tri
+    bool isSame();//kiem tra 2 gia tri giong nhau khong
     int getValue(int x);
 };
 
@@ -535,14 +555,14 @@ private:
     string name;
     int point;
 public:
-    static vector<Product> readFromFile(ifstream& in);
-    static void showList(vector<Product> pro);
-    static void showList(vector<Product> pro, int max);
+    static vector<Product> readFromFile(ifstream& in, string filename); //doc file product.txt
+    static void showList(vector<Product> pro); //show danh sach
+    static void showList(vector<Product> pro, int max);//show danh sach voi dieu kien la so diem cac san pham nho hon so diem cua khach hang
     int getPoint();
     string getName();
 };
 
-Time::Time() {
+Time::Time() {//lay time hien tai
     time_t now = time(0);
     tm* t = localtime(&now);
     this->year = 1900 + t->tm_year;
@@ -551,6 +571,20 @@ Time::Time() {
     this->hour = t->tm_hour;
     this->min = t->tm_min;
     this->sec = t->tm_sec;
+}
+
+int Time::readFromFile(ifstream& in) {
+    in.open("year.txt");
+    int x;
+    in >> x;
+    in.close();
+    return x;
+}
+
+void Time::writeToFile(ofstream& out, int x) {
+    out.open("year.txt");
+    out << x;
+    out.close();
 }
 
 vector<string> Tokenizer::split(string haystack, string needle) {
@@ -693,6 +727,7 @@ vector<Customer> Customer::readFromFile(ifstream& in) {
         temp.name = tokens[0];
         temp.phone_number = tokens[1];
         temp.point = stoi(tokens[2]);
+        temp.money = stof(tokens[3]);
         customer.push_back(temp);
     }
     in.close();
@@ -703,8 +738,28 @@ void Customer::setPoint(int point) {
     this->point = point;
 }
 
+void Customer::setMoney(float money) {
+    this->money = money;
+}
+
 int Customer::getPoint() {
     return this->point;
+}
+
+float Customer::getMoney() {
+    return this->money;
+}
+
+string Customer::getName() {
+    return this->name;
+}
+
+string Customer::getPhone() {
+    return this->phone_number;
+}
+
+void Customer::updateMoney(float money) {
+    this->money += money;
 }
 
 void Customer::regis(string name, string phone) {
@@ -722,6 +777,7 @@ void Customer::regis(string name, string phone) {
         }
     }
     temp.point = 0;
+    temp.money = 0;
     customer.push_back(temp);
     gotoxy(25, 3);
     cout << "You registered successfully" << endl;
@@ -731,13 +787,24 @@ void Customer::regis(string name, string phone) {
 void Customer::writeToFile(ofstream& out, vector<Customer> customer) {
     out.open("customer.txt");
     for (int i = 0; i < customer.size(); i++)
-        out << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << endl;
+        out << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << " - " << customer[i].money << endl;
     out.close();
+}
+
+Customer Customer::findBestCustomer(ifstream& in) {
+    vector<Customer> temp = readFromFile(in);
+    Customer res = temp[0];
+    int max = 0;
+    for (int i = 1; i < temp.size(); i++) {
+        if (res.money < temp[i].money)
+            res = temp[i];
+    }
+    return res;
 }
 
 void Customer::showDetail(vector<Customer> customer) {
     for (int i = 0; i < customer.size(); i++)
-        cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << endl;
+        cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point  << " - " << customer[i].money << endl;
 }
 
 bool Customer::isAccount(ifstream& in, string name, string phone) {
@@ -754,13 +821,19 @@ void Customer::setCustomer(string name, string phone) {
     this->phone_number = phone;
 }
 
+void Customer::showDetail() {
+    cout << "\n\t\tCongratulation " << this->name << " - " << this->phone_number << " - " << this->point << " - " << this->money << endl;
+}
+
 void Customer::accumulatePoint(float total) {
     if (total >= 1000000)
         this->point += 3;
     else if (total >= 500000)
         this->point += 2;
-    else
+    else if (total >= 100000)
         this->point++;
+    else
+        this->point;
 }
 
 Game::Game() {
@@ -806,9 +879,9 @@ void Game::show() {
         cout << this->value[i] << "%  ";
 }
 
-vector<Product> Product::readFromFile(ifstream& in) {
+vector<Product> Product::readFromFile(ifstream& in, string filename) {
     vector<Product> res;
-    in.open("product.txt");
+    in.open(filename);
     while (!in.eof()) {
         string temp;
         Product pro;
@@ -844,6 +917,48 @@ string Product::getName() {
     return this->name;
 }
 
+vector<BestCustomer> BestCustomer::readFromFile(ifstream& in) {
+    vector<BestCustomer> customer;
+    in.open("best customer.txt");
+    while (!in.eof()) {
+        string buffer;
+        getline(in, buffer);
+        if (buffer.size() == 0)
+            break;
+        BestCustomer temp;
+        vector<string> tokens = Tokenizer::split(buffer, " - ");
+        temp.year = stoi(tokens[0]);
+        temp.name = tokens[1];
+        temp.phone_number = tokens[2];
+        temp.money = stof(tokens[3]);
+        customer.push_back(temp);
+    }
+    in.close();
+    return customer;
+}
+
+void BestCustomer::writeToFile(ofstream& out, vector<BestCustomer> customer) {
+    out.open("best customer.txt");
+    for (int i = 0; i < customer.size(); i++)
+        out << customer[i].year << " - " << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].money << endl;
+    out.close();
+}
+
+void BestCustomer::showDetail(vector<BestCustomer> customer) {
+    for (int i = 0; i < customer.size(); i++)
+        cout << customer[i].year << ". " << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].money << endl;
+}
+
+BestCustomer BestCustomer::convert(Customer cus, int year) {
+    BestCustomer best;
+    best.name = cus.getName();
+    best.phone_number = cus.getPhone();
+    best.point = cus.getPoint();
+    best.money = cus.getMoney();
+    best.year = year;
+    return best;
+}
+
 #include "Header.h"
 
 int main()
@@ -852,7 +967,24 @@ int main()
     cout.setf(ios::showpoint);
     cout << setprecision(2);
     fstream tmp("temp.dat", ios::binary | ios::out);
+    // lay time hien tai, neu ket thuc mot nam thi file customer.txt duoc thiet lap lai
+    Time current;
+    ifstream in1;
+    ofstream out1;
+    int year = Time::readFromFile(in1); //lay nam trong file year.txt
+    if (year != current.getYear()) { //so sanh nam lay ra voi nam hien tai, neu khac thi thiet lap file txt lai tu dau
+        Customer temp;
+        vector<Customer> customer = temp.readFromFile(in1);
+        for (int i = 0; i < customer.size(); i++) {
+            customer[i].setPoint(0);
+            customer[i].setMoney(0);
+        }
+        temp.writeToFile(out1, customer);
+        Time::writeToFile(out1, current.getYear());
+    }
+    //
 menu:
+    // menu chinh
     system("cls");
     gotoxy(25, 2);
     cout << "Super Market Billing ";
@@ -873,6 +1005,7 @@ menu:
     cin >> ch;
     switch (ch)
     {
+    // hien thi bill
     case 1:
     ss:
         system("cls");
@@ -1076,12 +1209,13 @@ menu:
             goto ch;
         }
     case 5:
+    // tinh nang dang ky tai khoan
     qw: {
         system("cls");
         gotoxy(25, 3);
-        cout << "\n\t\t1.Register account" << endl;
-        cout << "\n\t\t2.View list of account" << endl;
-        cout << "\n\t\t3.Back to menu" << endl;
+        cout << "\n\t\t1.Register account" << endl; // dang ky tai khoan
+        cout << "\n\t\t2.View list of account" << endl; // xem danh sach tai khoan
+        cout << "\n\t\t3.Back to menu" << endl; // quay ve menu chinh
         cout << "\n\t\tEnter your choice: ";
         int option;
         cin >> option;
@@ -1099,15 +1233,15 @@ menu:
                 getline(cin, phone);
                 _getch();
                 system("cls");
-                customer.regis(name, phone);
+                customer.regis(name, phone); // ham dang ky
                 _getch();
                 goto qw;
             }
             else if (option == 2) {
                 ifstream in;
                 Customer temp;
-                vector<Customer> customer = temp.readFromFile(in);
-                temp.showDetail(customer);
+                vector<Customer> customer = temp.readFromFile(in); //doc file customer.txt
+                temp.showDetail(customer); //show ra man hinh thong tin
                 _getch();
                 system("cls");
                 goto qw;
@@ -1115,20 +1249,21 @@ menu:
         }
         goto menu;
     }
+    // tinh nang dich vu khach hang
     case 6: {
         system("cls");
         gotoxy(25, 3);
         cin.ignore(1);
         cout << "\n\t\tPlease enter name and phone number to check your account is registered" << endl;
-        cout << "\n\t\tEnter name: ";
+        cout << "\n\t\tEnter name: "; // nhap ten
         string name;
         getline(cin, name);
-        cout << "\n\t\tEnter phone number: ";
+        cout << "\n\t\tEnter phone number: "; // nhap sdt
         string num;
         getline(cin, num);
         system("cls");
         ifstream in;
-        if (cus.isAccount(in, name, num)) {
+        if (cus.isAccount(in, name, num)) { //kiem tra tai khoan nay co ton tai khong
             gotoxy(25, 3);
             flag = true;
             cus.setCustomer(name, num);
@@ -1136,7 +1271,7 @@ menu:
             _getch();
             system("cls");
         }
-        else {
+        else { //neu khong ton tai thi can su dung chuc nang so 5 de dang ky tai khoan
             gotoxy(25, 3);
             cout << "\n\t\tYou must have a account to access to this feature" << endl;
             cout << "\n\t\tPlease choose number 5 to register account";
@@ -1144,12 +1279,14 @@ menu:
             goto menu;
         }
     }
+    // menu tinh nang dich vu khach hang
     yy:{
         gotoxy(25, 3);
-        cout << "\n\t\t1.Lucky bill" << endl;
-        cout << "\n\t\t2.Accumulate point" << endl;
-        cout << "\n\t\t3.Use point" << endl;
-        cout << "\n\t\t4.Back to menu" << endl;
+        cout << "\n\t\t1.Lucky bill" << endl; //mini game (neu dung co the se giam gia cua bill nhung anh huong den diem tich luy)
+        cout << "\n\t\t2.Accumulate point" << endl; //diem tich luy, tinh nang bat buoc dung neu da co tai khoan
+        cout << "\n\t\t3.Use point" << endl; //su dung diem tich luy bang cach mua hang bang diem
+        cout << "\n\t\t4.Customer Gratitude" << endl; //tri an khach hang, khach hang co tong tien cao nhat mot nam se duoc tang mot phan qua
+        cout << "\n\t\t5.Back to menu" << endl; // quay ve menu chinh
         cout << "\n\t\tEnter your choice: ";
         int option;
         cin >> option;
@@ -1162,7 +1299,7 @@ menu:
                 total += amt.retnetamt();
             fin.close();
             gotoxy(25, 3);
-            if (total >= 100000) {
+            if (total >= 100000) { //neu bill co gia tri lon hon 100K thi tinh nang moi duoc thuc hien
                 cout << "\n\t\tYour grand total is: " << total << endl;
                 cout << "\n\t\tYou can play a minigame to decrease your bill" << endl;
                 cout << "\n\t\tAlthough you can decrease your bill, your accumulate point can change" << endl;
@@ -1195,8 +1332,8 @@ menu:
                     }
                     system("cls");
                     Game game;
-                    game.setNum(total);
-                    if (game.isSame()) {
+                    game.setNum(total); 
+                    if (game.isSame()) { //neu chu so cuoi cung dau tien khac 0 cua bill giong voi so he thong random thi win game
                         gotoxy(25, 3);
                         cout << "\n\t\tCongratulation!!!!You win this game!!!" << endl;
                         cout << "\n\t\tAnd your bill will descrease a secret value" << endl;
@@ -1205,7 +1342,7 @@ menu:
                         cout << "\n\t\tWith 1-10 we have a different value" << endl;
                         cout << "\n\t\tEnter your choice: ";
                         int op1;
-                        cin >> op1;
+                        cin >> op1; // nhap lua chon so tu 1-10, tuong ung voi moi so la mot gia tri giam khac nhau
                         int percent = game.getValue(op1);
                         _getch();
                         system("cls");
@@ -1213,10 +1350,11 @@ menu:
                         cout << "\n\t\tYour bill decrease " << percent << "%" << endl;
                         cout << "\n\t\tList of value: " << endl;
                         cout << "\n\t\t";
-                        game.show();
+                        game.show(); // hien gia tri cua tung con so
                         _getch();
                         system("cls");
-                        total = total - total * percent / 100.0;
+                        total = total - total * percent / 100.0; // giam gia bill theo gia tri tim duoc
+                        // xuat bill
                         gotoxy(30, 3);
                         cout << " BILL DETAILS ";
                         gotoxy(3, 5);
@@ -1241,6 +1379,7 @@ menu:
                         }
                         gotoxy(17, k);
                         cout << "\n\n\n\t\t\tGrand Total = " << total << " (decrease " << percent << "%)";
+                        //
                         fin.close();
                         _getch();
                         system("cls");
@@ -1267,9 +1406,10 @@ menu:
                 goto yy;
             }
         }
+        // tinh nang diem tich luy
         case 2: {
             system("cls");
-            if (flag == false) {
+            if (flag == false) { //su dung bien flag de dam bao tai khoan khong tich luy diem 2 lan lien tuc
                 gotoxy(25, 3);
                 cout << "\n\t\tYour point was updated" << endl;
                 _getch();
@@ -1277,48 +1417,51 @@ menu:
                 goto yy;
             }
             fin.open("itemstore.dat", ios::binary);
-            gtotal = 0;
+            gtotal = 0; // bien luu gia tri bill khi chua dung minigame
             while (fin.read((char*)&amt, sizeof(amt)))
                 gtotal += amt.retnetamt();
             fin.close();
-            if (total == 0)
+            if (total == 0) // total la bien dung de luu gia tri bill sau khi dung minigame
                 total = gtotal;
-            gotoxy(25, 3);
-            if (total < 100000) {
+            if (total < 100000) { // tich luy diem duoc dung khi bill tren 100K
+                gotoxy(25, 3);
                 cout << "\n\t\tYour bill is " << total << endl;
                 cout << "\n\t\tTo use this feature, you need bill greater 100K" << endl;
                 cout << "\n\t\tYou need " << 100000 - total << " to use" << endl;
+                _getch();
+                system("cls");
             }
-            else {
-                ifstream in;
-                ofstream out;
-                float opoint, npoint;
-                vector<Customer> res = cus.readFromFile(in);
-                for (int i = 0; i < res.size(); i++) {
-                    if (cus == res[i]) {
-                        opoint = res[i].getPoint();
-                        res[i].accumulatePoint(total);
-                        npoint = res[i].getPoint();
-                        break;
-                    }
+            gotoxy(25, 3);
+            ifstream in;
+            ofstream out;
+            float opoint, npoint;
+            vector<Customer> res = cus.readFromFile(in); //doc file customer.txt
+            for (int i = 0; i < res.size(); i++) {
+                if (cus == res[i]) {
+                    opoint = res[i].getPoint(); //lay diem tich luy hien tai
+                    res[i].accumulatePoint(total); //cap nhat diem
+                    res[i].updateMoney(total);// cap nhat tien
+                    npoint = res[i].getPoint(); //lay diem sau khi cap nhat
+                    break;
                 }
-                cus.writeToFile(out, res);
-                cout << "\n\t\tUpdate point successfully" << endl;
-                cout << "\n\t\tOld point: " << opoint << endl;
-                cout << "\n\t\tNew point: " << npoint << endl;
-                flag = false;
             }
+            cus.writeToFile(out, res);// ghi file customer.txt
+            cout << "\n\t\tUpdate point successfully" << endl;
+            cout << "\n\t\tOld point: " << opoint << endl;
+            cout << "\n\t\tNew point: " << npoint << endl;
+            flag = false;
             _getch();
             system("cls");
             goto yy;
         }
+        // tinh nang mua hang bang diem
         case 3: {
             system("cls");
         aa: {
             gotoxy(25, 3);
-            cout << "\n\t\t1.View list product" << endl;
-            cout << "\n\t\t2.Buy product" << endl;
-            cout << "\n\t\t3.Back" << endl;
+            cout << "\n\t\t1.View list product" << endl; //xem danh sach san pham
+            cout << "\n\t\t2.Buy product" << endl;// mua san pham
+            cout << "\n\t\t3.Back" << endl;// quay ve menu 
             cout << "\n\t\tEnter your choice: ";
             }
             int op;
@@ -1327,8 +1470,7 @@ menu:
             case 1: {
                 system("cls");
                 ifstream in;
-                vector<Product> pro = Product::readFromFile(in);
-                Product::showList(pro);
+                vector<Product> pro = Product::readFromFile(in, "product.txt");//doc danh sach trong file product.txt
                 _getch();
                 system("cls");
                 goto aa;
@@ -1337,14 +1479,14 @@ menu:
                 system("cls");
                 int point;
                 ifstream in;
-                vector<Customer> res = cus.readFromFile(in);
+                vector<Customer> res = cus.readFromFile(in); //doc file customer.txt
                 for (int i = 0; i < res.size(); i++) {
                     if (cus == res[i]) {
-                        point = res[i].getPoint();
+                        point = res[i].getPoint(); //lay diem cua khach hang dang su dung tinh nang nay
                         break;
                     }
                 }
-                if (point == 0) {
+                if (point == 0) { 
                     cout << "\n\t\tYour point is 0" << endl;
                     cout << "\n\t\tYou need more point to buy" << endl;
                     _getch();
@@ -1355,23 +1497,23 @@ menu:
                 cout << "\n\t\tYour point: " << point << endl << endl;
                 cout << "\n\t\t\t\tLIST PRODUCT YOU CAN BUY WITH THIS POINT" << endl;
                 gotoxy(25, 9);
-                vector<Product> pro = Product::readFromFile(in);
-                Product::showList(pro, point);
+                vector<Product> pro = Product::readFromFile(in, "product.txt");
+                Product::showList(pro, point);// hien thi danh sach hang hoa voi so diem ma khach hang nay co the mua
                 cout << "\n\t\tEnter position of product you want to buy: ";
-                int pos, quantity;
+                int pos, quantity; //pos la vi tri hang, quantity la so luong hang
                 cin >> pos;
                 cout << "\n\t\tEnter quantity of this product: ";
                 cin >> quantity;
-                vector<Product> final;
-                vector<int> size;
+                vector<Product> final; //luu danh sach hang hoa sau khi da mua bang diem
+                vector<int> size; //luu so luong moi loai hang hoa
                 while (true) {
-                    system("cls");
+                    system("cls"); 
                     gotoxy(25, 3);
-                    point -= pro[pos - 1].getPoint() * quantity;
-                    if (point < 0) {
+                    point -= pro[pos - 1].getPoint() * quantity; //tinh diem sau khi mua hang
+                    if (point < 0) { //neu diem am thi yeu cau giam bot so luong san pham nay xuong
                         cout << "\n\t\tYour point is not enough" << endl;
                         cout << "\n\t\tYou need to descrease this product's quantity" << endl; 
-                        point += pro[pos - 1].getPoint() * quantity;
+                        point += pro[pos - 1].getPoint() * quantity; //tra lai diem
                     }
                     else {
                         cout << "\n\t\tBuy product successfully" << endl;
@@ -1379,7 +1521,7 @@ menu:
                             final.push_back(pro[pos - 1]);
                             size.push_back(quantity);
                         }
-                        else {
+                        else { //phan nay dung de kiem tra xem neu hang hoa A duoc mua voi cac so luong khac nhau thi se cong don, tranh trung lap
                             bool flag1 = true;
                             for (int i = 0; i < final.size(); i++) {
                                 if (final[i].getName() == pro[pos - 1].getName()) {
@@ -1393,6 +1535,7 @@ menu:
                                 size.push_back(quantity);
                             }
                         }
+                        //
                         if (point == 0) {
                             cout << "\n\t\tYour point is: 0" << endl;
                             cout << "\n\t\tYou need more point to continue buying" << endl;
@@ -1401,6 +1544,7 @@ menu:
                             break;
                         }
                     }
+                    // hoi nguoi dung co muon tiep tuc mua hang khong
                     cout << "\n\t\tDo you want to continue buying?" << endl;
                     cout << "\n\t\t1.YES              2.NO" << endl;
                     int op1;
@@ -1411,26 +1555,28 @@ menu:
                     _getch();
                     system("cls");
                     gotoxy(25, 3);
+                    //lap lai menu
                     cout << "\n\t\tYour point: " << point << endl << endl;
                     cout << "\n\t\t\t\tLIST PRODUCT YOU CAN BUY WITH THIS POINT" << endl;
                     gotoxy(25, 9);
-                    vector<Product> pro = Product::readFromFile(in);
+                    vector<Product> pro = Product::readFromFile(in, "product.txt");
                     Product::showList(pro, point);
                     cout << "\n\t\tEnter position of product you want to buy: ";
                     cin >> pos;
                     cout << "\n\t\tEnter quantity of this product: ";
                     cin >> quantity;
+                    //
                 }
                 system("cls");
                 gotoxy(25, 3);
-                cout << "\n\t\t\t\tBILL DETAIL" << endl;
+                cout << "\n\t\t\t\tBILL DETAIL" << endl; //xuat hoa don
                 cout << "\n\tITEM NO        NAME        POINT      QUANTITY" << endl;
                 for (int i = 0; i < final.size(); i++) {
                     cout << "\n\t" << i + 1 << "              " << final[i].getName() << "        " << final[i].getPoint() << "             " << size[i] << endl;
                 }
                 for (int i = 0; i < res.size(); i++) {
                     if (cus == res[i]) {
-                        res[i].setPoint(point);
+                        res[i].setPoint(point); //cap nhat lai diem
                         break;
                     }
                 }
@@ -1446,10 +1592,71 @@ menu:
             }
             }
         }
-        case 4:
+        //tri an khach hang
+        case 4: {
+            system("cls");
+        bb: {
+            gotoxy(25, 3);
+            cout << "\n\t\t1.View history" << endl; //xem lich su khach hang mua hang nhieu nhat qua cac nam
+            cout << "\n\t\t2.Use feature" << endl; //su dung tinh nang
+            cout << "\n\t\t3.Show help" << endl;// xem huong dan
+            cout << "\n\t\t4.Back" << endl;
+            }
+            cout << "\n\t\tEnter your choice: ";
+            int op;
+            cin >> op;
+            switch (op) {
+            case 1: {
+                system("cls");
+                ifstream in;
+                vector<BestCustomer> cus = BestCustomer::readFromFile(in); //doc file best customer.txt
+                BestCustomer::showDetail(cus);//show ra man hinh thong tin
+                _getch();
+                system("cls");
+                goto bb;
+            }
+            case 2: {
+                system("cls");
+                ifstream in;
+                ofstream out;
+                Customer best = cus.findBestCustomer(in);// tim khach hang tot nhat
+                gotoxy(25, 3);
+                cout << "\n\t\t\t\tBEST CUSTOMER IN " << current.getYear() << endl;
+                best.showDetail();
+                cout << "\n\t\tThis customer will give a gift equal to 10% sum money" << endl;
+                cout << "\n\t\tThis gift values " << best.getMoney() * 10.0 / 100 << endl;
+                // them thong tin khach hang tot nhat vao filr best customer.txt
+                BestCustomer bcus = bcus.convert(best, current.getYear()); 
+                vector<BestCustomer> temp = BestCustomer::readFromFile(in); 
+                temp.push_back(bcus);
+                BestCustomer::writeToFile(out, temp);
+                //
+                _getch();
+                system("cls");
+                goto bb;
+            }
+            case 3: { // tinh nang duoc dung 1 nam 1 lan, co the thay doi thoi gian he thong de su dung lap tuc
+                system("cls");
+                gotoxy(25, 3);
+                cout << "\n\t\tThis feature use after 1 year" << endl;
+                cout << "\n\t\tThe system will find the best customer with highest money" << endl;
+                cout << "\n\t\tIf you want to use immediately, you can change time in your system in the end of year" << endl;
+                cout << "\n\t\tExample: today is 24/8/2020, you need to change time into 31/12/2020 to use feature" << endl;
+                _getch();
+                system("cls");
+                goto bb;
+            }
+            case 4: {
+                system("cls");
+                goto yy;
+            }
+            }
+        }
+        case 5:
             goto menu;
         }
     }
+    //truoc khi thoat khoi he thong can vote sao de phat trien he thong
     case 7: {
         system("cls");
         ifstream in;
@@ -1463,9 +1670,9 @@ menu:
         gotoxy(25, 9);
         cout << "Enter your choice here (1-5 stars): ";
         string res;
-        cin >> res;
+        cin >> res; 
         Star star;
-        int val = star.convertStar(res);
+        int val = star.convertStar(res); //chuyen doi string sang int
         system("cls");
         while (val == -1) {
             gotoxy(25, 3);
@@ -1479,15 +1686,15 @@ menu:
         }
         gotoxy(25, 3);
         cout << "Thanks for your respond" << endl;
-        star.writeToFile(out, res, in);
+        star.writeToFile(out, res, in); //ghi vao file star.txt
         _getch();
         system("cls");
         gotoxy(25, 3);
         cout << "Do you want to use some feature?" << endl;
         gotoxy(25, 5);
-        cout << "1.View average stars" << endl;
+        cout << "1.View average stars" << endl; //xem so sao trung binh (max la 5)
         gotoxy(25, 7);
-        cout << "2.View history of respond" << endl;
+        cout << "2.View history of respond" << endl;// xem lich su vote
         gotoxy(25, 9);
         cout << "3.Exit" << endl;
         gotoxy(25, 11);
