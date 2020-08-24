@@ -533,6 +533,8 @@ int main()
     cout.setf(ios::fixed);
     cout.setf(ios::showpoint);
     cout<<setprecision(2);
+
+    // ----------------------------------------------------------------------dang nhap vao he thong
 login:
     system("cls");
     int type;
@@ -575,6 +577,7 @@ login:
     }
     else
         return 0;
+    //----------------------------------------------------------------------ket thuc dang nhap
     
 menu:
     system("cls");
@@ -593,7 +596,7 @@ menu:
     cin>>ch;
     switch(ch)
     {
-    case 1:
+    case 1://--------------------------------------------------------------------Bill Report
 ss:
         system("cls");
         gotoxy(25,2);
@@ -634,12 +637,9 @@ ss:
             gtotal=0;
             while(fin.read((char*)&amt, sizeof(amt)))
             {
-                
-                
                     amt.report();
                     gtotal+=amt.retnetamt();
                     ff=0;
-                
             }
             gotoxy(17,k);
             cout<<"\n\n\n\t\t\tGrand Total="<<gtotal;
@@ -651,7 +651,7 @@ ss:
             goto menu;
         }
         goto ss;
-    case 2:
+    case 2:  //-------------------------------------------------- --------------------Add/Edit/Delete
 db:
         system("cls");
         gotoxy(25,2);
@@ -692,7 +692,7 @@ db:
             _getch();
             goto db;
         }
-    case 3:
+    case 3://--------------------------------------------------------------------------- show item detail
         system("cls");
         flag=0;
         int ino;
@@ -720,7 +720,7 @@ db:
         _getch();
         fin.close();
         goto menu;
-    case 4:
+    case 4://-------------------------------------------------------------------------------- feed back
      ch:
         system("cls");
         gotoxy(25, 2);
@@ -750,7 +750,7 @@ db:
         default:
             goto ch;
         }
-    case 5:
+    case 5: //----------------------------------------------------------------------------------- Exit
         system("cls");
         gotoxy(20,20);
         cout<<"ARE YOU SURE, YOU WANT TO EXIT (Y/N)?";
