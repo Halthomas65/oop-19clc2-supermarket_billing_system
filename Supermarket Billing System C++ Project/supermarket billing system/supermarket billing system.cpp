@@ -512,16 +512,19 @@ public:
     float getMoney();
     string getName();
     string getPhone();
+    string getRank();
     void showDetail(); //show thong tin
     void setMoney(float money);
     void updateMoney(float money); //cap nhat tien
     void regis(string name, string phone); //dang ky tai khoan
     bool operator==(const Customer& p);
     void setCustomer(string name, string phone);
+    static void sortCustomerPoint(vector<Customer>& cus); //sap xep theo diem
+    static void sortCustomerMoney(vector<Customer>& cus); //sap xep theo tien
     vector<Customer> readFromFile(ifstream& in); //doc file customer.txt
     Customer findBestCustomer(ifstream& in); //tim khach hang tot nhat
     void writeToFile(ofstream& out, vector<Customer> customer); //ghi file customer.txt
-    void showDetail(vector<Customer> customer); //show thong tin danh sach khach hang
+    void showDetail(vector<Customer> customer, bool flag); //show thong tin danh sach khach hang, flag = true thi show khong hien rank
     bool isAccount(ifstream& in, string name, string phone); //kiem tra tai khoan dang ky chua
     void accumulatePoint(float total); //cap nhat diem tich luy
 };
@@ -530,6 +533,7 @@ class BestCustomer : public Customer {
 private:
     int year;
 public:
+    int getYear();
     static vector<BestCustomer> readFromFile(ifstream& in); //doc file best customer.txt
     static void writeToFile(ofstream& out, vector<BestCustomer> customer); //ghi file customer.txt
     static void showDetail(vector<BestCustomer> customer); // show thong tin 
@@ -758,6 +762,16 @@ string Customer::getPhone() {
     return this->phone_number;
 }
 
+string Customer::getRank() {
+    if (this->money < 1000000)
+        return "Bronze";
+    if (this->money < 3000000)
+        return "Silver";
+    if (this->money < 5000000)
+        return "Gold";
+    return "Diamond";
+}
+
 void Customer::updateMoney(float money) {
     this->money += money;
 }
@@ -802,9 +816,33 @@ Customer Customer::findBestCustomer(ifstream& in) {
     return res;
 }
 
-void Customer::showDetail(vector<Customer> customer) {
-    for (int i = 0; i < customer.size(); i++)
-        cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point  << " - " << customer[i].money << endl;
+void Customer::sortCustomerPoint(vector<Customer>& cus) {
+    for (int i = 0; i < cus.size() - 1; i++) {
+        for (int j = i + 1; j < cus.size(); j++) {
+            if (cus[i].point < cus[j].point)
+                swap(cus[i], cus[j]);
+        }
+    }
+}
+
+void Customer::sortCustomerMoney(vector<Customer>& cus) {
+    for (int i = 0; i < cus.size() - 1; i++) {
+        for (int j = i + 1; j < cus.size(); j++) {
+            if (cus[i].money < cus[j].money)
+                swap(cus[i], cus[j]);
+        }
+    }
+}
+
+void Customer::showDetail(vector<Customer> customer, bool flag) {
+    if (flag == true) {
+        for (int i = 0; i < customer.size(); i++)
+            cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << " - " << customer[i].money << endl;
+    }
+    else {
+        for (int i = 0; i < customer.size(); i++)
+            cout << i + 1 << "." << customer[i].name << " - " << customer[i].phone_number << " - " << customer[i].point << " - " << customer[i].money << " - " << customer[i].getRank() << endl;
+    }
 }
 
 bool Customer::isAccount(ifstream& in, string name, string phone) {
@@ -959,7 +997,9 @@ BestCustomer BestCustomer::convert(Customer cus, int year) {
     return best;
 }
 
-#include "Header.h"
+int BestCustomer::getYear() {
+    return this->year;
+}
 
 int main()
 {
@@ -1241,7 +1281,7 @@ menu:
                 ifstream in;
                 Customer temp;
                 vector<Customer> customer = temp.readFromFile(in); //doc file customer.txt
-                temp.showDetail(customer); //show ra man hinh thong tin
+                temp.showDetail(customer, true); //show ra man hinh thong tin
                 _getch();
                 system("cls");
                 goto qw;
@@ -1286,7 +1326,8 @@ menu:
         cout << "\n\t\t2.Accumulate point" << endl; //diem tich luy, tinh nang bat buoc dung neu da co tai khoan
         cout << "\n\t\t3.Use point" << endl; //su dung diem tich luy bang cach mua hang bang diem
         cout << "\n\t\t4.Customer Gratitude" << endl; //tri an khach hang, khach hang co tong tien cao nhat mot nam se duoc tang mot phan qua
-        cout << "\n\t\t5.Back to menu" << endl; // quay ve menu chinh
+        cout << "\n\t\t5.View rank" << endl; //xem muc rank cua khach hang, dua vao diem hoac so tien
+        cout << "\n\t\t6.Back to menu" << endl; // quay ve menu chinh
         cout << "\n\t\tEnter your choice: ";
         int option;
         cin >> option;
@@ -1625,10 +1666,15 @@ menu:
                 best.showDetail();
                 cout << "\n\t\tThis customer will give a gift equal to 10% sum money" << endl;
                 cout << "\n\t\tThis gift values " << best.getMoney() * 10.0 / 100 << endl;
-                // them thong tin khach hang tot nhat vao filr best customer.txt
+                // them thong tin khach hang tot nhat vao file best customer.txt
                 BestCustomer bcus = bcus.convert(best, current.getYear()); 
                 vector<BestCustomer> temp = BestCustomer::readFromFile(in); 
-                temp.push_back(bcus);
+                if (temp[temp.size()-1].getYear() != bcus.getYear())
+                    temp.push_back(bcus);
+                else {
+                    temp.erase(temp.begin() + temp.size() - 1);
+                    temp.push_back(bcus);
+                }
                 BestCustomer::writeToFile(out, temp);
                 //
                 _getch();
@@ -1652,7 +1698,87 @@ menu:
             }
             }
         }
-        case 5:
+        // xem rank
+        case 5: {
+            system("cls");
+        cc: {
+            gotoxy(25, 3);
+            cout << "\n\t\t1.View rank (base on point)" << endl;// xem rank dua theo diem
+            cout << "\n\t\t2.View rank (base on money)" << endl;// xem rank dua theo tong tien
+            cout << "\n\t\t3.View list (sort descending by point)" << endl;// xem danh sach theo thu tu giam diem
+            cout << "\n\t\t4.View list (sort descending by money)" << endl;// xem danh sach theo thu tu giam tien
+            cout << "\n\t\t5.Back to menu" << endl;
+            }
+            cout << "\n\t\tEnter your choice: ";
+            int op1;
+            cin >> op1;
+            switch (op1) {
+            case 1: {
+                system("cls");
+                ifstream in;
+                vector<Customer> res = cus.readFromFile(in); //doc file customer.txt
+                Customer::sortCustomerPoint(res); //sap xep giam theo diem
+                gotoxy(25, 3);
+                for (int i = 0; i < res.size(); i++) {
+                    if (cus == res[i]) { //duyet vector tim thong tin khach hang
+                        cout << "\n\t\tYour point is: " << res[i].getPoint() << endl;
+                        cout << "\n\t\tYour position is: " << i + 1 << " in " << res.size() << " customers" << endl;
+                        if (i > 2)
+                            cout << "\n\t\tTo reach top 3, you need " << res[2].getPoint() - res[i].getPoint() << " point left" << endl;
+                        break;
+                    }
+                }
+                _getch();
+                system("cls");
+                goto cc;
+            }
+            case 2: {
+                system("cls");
+                ifstream in;
+                vector<Customer> res = cus.readFromFile(in); //doc file customer.txt
+                Customer::sortCustomerMoney(res); //sap xep giam theo tien
+                gotoxy(25, 3);
+                for (int i = 0; i < res.size(); i++) {
+                    if (cus == res[i]) { //duyet mang de hien thong tin
+                        cout << "\n\t\tYour money is: " << res[i].getMoney() << endl;
+                        cout << "\n\t\tYour position is: " << i + 1 << " in " << res.size() << " customers" << endl;
+                        cout << "\n\t\tYour rank is: " << res[i].getRank() << endl;
+                        if (i > 2)
+                            cout << "\n\t\tTo reach top 3, you need " << res[2].getMoney() - res[i].getMoney() << " point left" << endl;
+                        break;
+                    }
+                }
+                _getch();
+                system("cls");
+                goto cc;
+            }
+            case 3: {
+                system("cls");
+                ifstream in;
+                vector<Customer> res = cus.readFromFile(in);
+                Customer::sortCustomerPoint(res);
+                cus.showDetail(res, true);
+                _getch();
+                system("cls");
+                goto cc;
+            }
+            case 4: {
+                system("cls");
+                ifstream in;
+                vector<Customer> res = cus.readFromFile(in);
+                Customer::sortCustomerMoney(res);
+                cus.showDetail(res, false);
+                _getch();
+                system("cls");
+                goto cc;
+            }
+            case 5: {
+                system("cls");
+                goto yy;
+            }
+            }
+        }
+        case 6:
             goto menu;
         }
     }
