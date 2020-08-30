@@ -566,6 +566,22 @@ public:
     string getName();
 };
 
+class Money {
+private:
+    vector<Time> time;
+    vector<int> quantity;
+    vector<float> money;
+public:
+    void readFromFile(ifstream& in, int year); //doc file (nam).txt
+    void writeToFile(ofstream& out, int year, float price, ifstream& in, Time cur); //ghi file (nam).txt
+    float calcOneDay(Time cur); //tinh tien trong 1 ngay
+    float calcOneMonth(Time cur); //tinh tien trong 1 thang
+    float calcOneYear(Time cur); //tinh tien trong 1 nam
+    int countOneDay(Time cur); //dem so luot khach hang 1 ngay
+    int countOneMonth(Time cur); //dem so luot khach hang 1 thang
+    int countOneYear(Time cur); //dem so luot khach hang 1 nam
+};
+
 Time::Time() {//lay time hien tai
     time_t now = time(0);
     tm* t = localtime(&now);
@@ -1001,6 +1017,132 @@ int BestCustomer::getYear() {
     return this->year;
 }
 
+void Money::readFromFile(ifstream& in, int year) {
+    string filename = to_string(year) + ".txt";
+    in.open(filename);
+    while (!in.eof()) {
+        string line;
+        getline(in, line);
+        if (line.size() == 0)
+            break;
+        vector<string> tokens = Tokenizer::split(line, " ");
+        if (tokens.size() == 3) {
+            Time p;
+            p.setDay(stoi(tokens[0]));
+            p.setMonth(stoi(tokens[1]));
+            p.setYear(stoi(tokens[2]));
+            time.push_back(p);
+            quantity.push_back(0);
+        }
+        else {
+            money.push_back(stof(tokens[0]));
+            quantity[quantity.size() - 1]++;
+        }
+    }
+    in.close();
+}
+
+void Money::writeToFile(ofstream& out, int year, float price, ifstream& in, Time cur) {
+    readFromFile(in, year);
+    if (cur.getYear() == year) {
+        if (cur.getDay() == time[time.size() - 1].getDay() && cur.getMonth() == time[time.size() - 1].getMonth()) {
+            quantity[quantity.size() - 1]++;
+            money.push_back(price);
+        }
+        else {
+            time.push_back(cur);
+            quantity.push_back(1);
+            money.push_back(price);
+        }
+    }
+    else {
+        year = cur.getYear();
+        time.clear();
+        time.push_back(cur);
+        quantity.clear();
+        quantity.push_back(1);
+        money.clear();
+        money.push_back(price);
+    }
+    string filename = to_string(year) + ".txt";
+    out.open(filename);
+    int index = 0;
+    for (int i = 0; i < time.size(); i++) {
+        out << time[i].getDay() << " " << time[i].getMonth() << " " << time[i].getYear() << endl;
+        for (int j = 0; j < quantity[i]; j++) {
+            out << money[index] << endl;
+            index++;
+        }
+    }
+    out.close();
+}
+
+float Money::calcOneDay(Time cur) {
+    float sum = 0;
+    int index = 0;
+    for (int i = 0; i < time.size(); i++) {
+        if (time[i].getDay() == cur.getDay() && time[i].getMonth() == cur.getMonth() && time[i].getYear() == cur.getYear()) {
+            for (int j = 0; j < quantity[i]; j++) {
+                sum += money[index];
+                index++;
+            }    
+        }
+        else {
+            index += quantity[i];
+        }
+    }
+    return sum;
+}
+
+float Money::calcOneMonth(Time cur) {
+    float sum = 0;
+    int index = 0;
+    for (int i = 0; i < time.size(); i++) {
+        if (time[i].getMonth() == cur.getMonth() && time[i].getYear() == cur.getYear()) {
+            for (int j = 0; j < quantity[i]; j++) {
+                sum += money[index];
+                index++;
+            }
+        }
+        else {
+            index += quantity[i];
+        }
+    }
+    return sum;
+}
+
+float Money::calcOneYear(Time cur) {
+    float sum = 0;
+    for (int i = 0; i < money.size(); i++)
+        sum += money[i];
+    return sum;
+}
+
+int Money::countOneDay(Time cur) {
+    for (int i = 0; i < time.size(); i++) {
+        if (cur.getDay() == time[i].getDay() && cur.getMonth() == time[i].getMonth()) {
+            return quantity[i];
+        }
+    }
+    return 0;
+}
+
+int Money::countOneMonth(Time cur) {
+    int count = 0;
+    for (int i = 0; i < time.size(); i++) {
+        if (cur.getMonth() == time[i].getMonth())
+            count += quantity[i];
+    }
+    return count;
+}
+
+int Money::countOneYear(Time cur) {
+    int count = 0;
+    for (int i = 0; i < time.size(); i++)
+        count += quantity[i];
+    return count;
+}
+
 int main()
 {
     cout.setf(ios::fixed);
@@ -1036,7 +1178,8 @@ menu:
     cout << "\t\t4.Feed back\n\n";
     cout << "\t\t5.Register\n\n";
     cout << "\t\t6.Service Customer\n\n";
-    cout << "\t\t7.Exit\n\n";
+    cout << "\t\t7.Statistic\n\n";
+    cout << "\t\t8.Exit\n\n";
     cout << "\t\tPlease Enter Required Option: ";
     int ch, ff;
     float gtotal = 0, total = 0;
@@ -1096,6 +1239,10 @@ menu:
             }
             gotoxy(17, k);
             cout << "\n\n\n\t\t\tGrand Total=" << gtotal;
+            ifstream in;
+            ofstream out;
+            Money money;
+            money.writeToFile(out, current.getYear(), gtotal, in, current);
             _getch();
             fin.close();
         }
@@ -1323,7 +1470,7 @@ menu:
     yy:{
         gotoxy(25, 3);
         cout << "\n\t\t1.Lucky bill" << endl; //mini game (neu dung co the se giam gia cua bill nhung anh huong den diem tich luy)
-        cout << "\n\t\t2.Accumulate point" << endl; //diem tich luy, tinh nang bat buoc dung neu da co tai khoan
+        cout << "\n\t\t2.Accumulate point (required)" << endl; //diem tich luy, tinh nang bat buoc dung neu da co tai khoan
         cout << "\n\t\t3.Use point" << endl; //su dung diem tich luy bang cach mua hang bang diem
         cout << "\n\t\t4.Customer Gratitude" << endl; //tri an khach hang, khach hang co tong tien cao nhat mot nam se duoc tang mot phan qua
         cout << "\n\t\t5.View rank" << endl; //xem muc rank cua khach hang, dua vao diem hoac so tien
@@ -1464,6 +1611,10 @@ menu:
             fin.close();
             if (total == 0) // total la bien dung de luu gia tri bill sau khi dung minigame
                 total = gtotal;
+            ifstream in;
+            ofstream out;
+            Money money;
+            money.writeToFile(out, current.getYear(), total, in, current);
             if (total < 100000) { // tich luy diem duoc dung khi bill tren 100K
                 gotoxy(25, 3);
                 cout << "\n\t\tYour bill is " << total << endl;
@@ -1473,8 +1624,6 @@ menu:
                 system("cls");
             }
             gotoxy(25, 3);
-            ifstream in;
-            ofstream out;
             float opoint, npoint;
             vector<Customer> res = cus.readFromFile(in); //doc file customer.txt
             for (int i = 0; i < res.size(); i++) {
@@ -1782,8 +1931,293 @@ menu:
             goto menu;
         }
     }
+    case 7: 
+    // tinh nang thong ke
+    abc: {
+        system("cls");
+        gotoxy(25, 3);
+        cout << "\n\t\t1.Calculate income in one day, one month, one year" << endl; //tinh thu nhap sieu thi trong 1 ngay, 1 tuan hay 1 nam
+        cout << "\n\t\t2.Count number of custumers in one day, one month, one year" << endl; //tinh so luot mua hang trong 1 ngay, 1 tuan hay 1 nam
+        cout << "\n\t\t3.Compare income between two days, two months, two years" << endl; //so sanh thu nhap giua hai ngay, hai thang hay hai nam
+        cout << "\n\t\t4.Back to menu" << endl;
+        cout << "\n\t\tEnter your choice: ";
+        int op;
+        cin >> op;
+        switch (op) {
+        case 1: {
+        c1: {
+            system("cls");
+            gotoxy(25, 3);
+            cout << "\n\t\t1.One day" << endl;
+            cout << "\n\t\t2.One month" << endl;
+            cout << "\n\t\t3.One year" << endl;
+            cout << "\n\t\t4.Back" << endl;
+            }
+            cout << "\n\t\tEnter your choice: ";
+            int op1;
+            cin >> op1;
+            switch (op1) {
+            case 1: {
+                system("cls");
+                gotoxy(25, 3);
+                int day, month, year;
+                cout << "\n\t\tEnter day: ";
+                cin >> day;
+                cout << "\n\t\tEnter month: ";
+                cin >> month;
+                cout << "\n\t\tEnter year: ";
+                cin >> year;
+                Time temp;
+                temp.setDay(day);
+                temp.setMonth(month);
+                temp.setYear(year);
+                Money money;
+                ifstream in;
+                money.readFromFile(in, year);
+                cout << "\n\t\tIncome in " << day << "/" << month << "/" << year << ": " << money.calcOneDay(temp) << endl;
+                _getch();
+                system("cls");
+                goto c1;
+            }
+            case 2: {
+                system("cls");
+                gotoxy(25, 3);
+                int month, year;
+                cout << "\n\t\tEnter month: ";
+                cin >> month;
+                cout << "\n\t\tEnter year: ";
+                cin >> year;
+                Time temp;
+                temp.setMonth(month);
+                temp.setYear(year);
+                Money money;
+                ifstream in;
+                money.readFromFile(in, year);
+                cout << "\n\t\tIncome in " << month << "/" << year << ": " << money.calcOneMonth(temp) << endl;
+                _getch();
+                system("cls");
+                goto c1;
+            }
+            case 3: {
+                system("cls");
+                gotoxy(25, 3);
+                int year;
+                cout << "\n\t\tEnter year: ";
+                cin >> year;
+                Time temp;
+                temp.setYear(year);
+                Money money;
+                ifstream in;
+                money.readFromFile(in, year);
+                cout << "\n\t\tIncome in " << year << ": " << money.calcOneYear(temp) << endl;
+                _getch();
+                system("cls");
+                goto c1;
+            }
+            case 4: {
+                system("cls");
+                goto abc;
+            }
+            }
+        }
+        case 2: {
+        c2: {
+            system("cls");
+            gotoxy(25, 3);
+            cout << "\n\t\t1.One day" << endl;
+            cout << "\n\t\t2.One month" << endl;
+            cout << "\n\t\t3.One year" << endl;
+            cout << "\n\t\t4.Back" << endl;
+            }
+            cout << "\n\t\tEnter your choice: ";
+            int op1;
+            cin >> op1;
+            switch (op1) {
+            case 1: {
+                system("cls");
+                gotoxy(25, 3);
+                int day, month, year;
+                cout << "\n\t\tEnter day: ";
+                cin >> day;
+                cout << "\n\t\tEnter month: ";
+                cin >> month;
+                cout << "\n\t\tEnter year: ";
+                cin >> year;
+                Time temp;
+                temp.setDay(day);
+                temp.setMonth(month);
+                temp.setYear(year);
+                ifstream in;
+                Money money;
+                money.readFromFile(in, year);
+                cout << "\n\t\tNumber of customers in " << day << "/" << month << "/" << year << ": " << money.countOneDay(temp) << endl;
+                _getch();
+                system("cls");
+                goto c2;
+            }
+            case 2: {
+                system("cls");
+                gotoxy(25, 3);
+                int month, year;
+                cout << "\n\t\tEnter month: ";
+                cin >> month;
+                cout << "\n\t\tEnter year: ";
+                cin >> year;
+                Time temp;
+                temp.setMonth(month);
+                temp.setYear(year);
+                ifstream in;
+                Money money;
+                money.readFromFile(in, year);
+                cout << "\n\t\tNumber of customers in " << month << "/" << year << ": " << money.countOneMonth(temp) << endl;
+                _getch();
+                system("cls");
+                goto c2;
+            }
+            case 3: {
+                system("cls");
+                gotoxy(25, 3);
+                int year;
+                cout << "\n\t\tEnter year: ";
+                cin >> year;
+                Time temp;
+                temp.setYear(year);
+                ifstream in;
+                Money money;
+                money.readFromFile(in, year);
+                cout << "\n\t\tNumber of customers in " << year << ": " << money.countOneYear(temp) << endl;
+                _getch();
+                system("cls");
+                goto c2;
+            }
+            case 4: {
+                system("cls");
+                goto abc;
+            }
+            }
+        }
+        case 3: {
+        c3: {
+            system("cls");
+            gotoxy(25, 3);
+            cout << "\n\t\t1.Compare between two days" << endl;
+            cout << "\n\t\t2.Compare between two months" << endl;
+            cout << "\n\t\t3.Compare between two years" << endl;
+            cout << "\n\t\t4.Back" << endl;
+            }
+            cout << "\n\t\tEnter your choice: ";
+            int op1;
+            cin >> op1;
+            switch (op1) {
+            case 1: {
+                system("cls");
+                gotoxy(25, 3);
+                cout << "\n\t\tEnter the first time with this format XX/XX/XXXX: ";
+                string temp;
+                cin.ignore(1);
+                getline(cin, temp);
+                Time t1, t2;
+                vector<string> tokens = Tokenizer::split(temp, "/");
+                t1.setDay(stoi(tokens[0]));
+                t1.setMonth(stoi(tokens[1]));
+                t1.setYear(stoi(tokens[2]));
+                cout << "\n\t\tEnter the second time with this format XX/XX/XXXX: ";
+                getline(cin, temp);
+                tokens.clear();
+                tokens = Tokenizer::split(temp, "/");
+                t2.setDay(stoi(tokens[0]));
+                t2.setMonth(stoi(tokens[1]));
+                t2.setYear(stoi(tokens[2]));
+                Money m1, m2;
+                ifstream in;
+                m1.readFromFile(in, t1.getYear());
+                m2.readFromFile(in, t2.getYear());
+                float sum1 = m1.calcOneDay(t1);
+                float sum2 = m2.calcOneDay(t2);
+                if (sum1 < sum2)
+                    cout << "\n\t\tThe income in " << t2.getDay() << "/" << t2.getMonth() << "/" << t2.getYear() << " larger than " << t1.getDay() << "/" << t1.getMonth() << "/" << t1.getYear() << ": " << sum2 - sum1 << endl;
+                else if (sum1 > sum2)
+                    cout << "\n\t\tThe income in " << t1.getDay() << "/" << t1.getMonth() << "/" << t1.getYear() << " larger than " << t2.getDay() << "/" << t2.getMonth() << "/" << t2.getYear() << ": " << sum1 - sum2 << endl;
+                else
+                    cout << "\n\t\tThe income in " << t1.getDay() << "/" << t1.getMonth() << "/" << t1.getYear() << " equal to " << t2.getDay() << "/" << t2.getMonth() << "/" << t2.getYear() << endl;
+                _getch();
+                system("cls");
+                goto c3;
+            }
+            case 2: {
+                system("cls");
+                gotoxy(25, 3);
+                cout << "\n\t\tEnter the first time with this format XX/XXXX: ";
+                string temp;
+                cin.ignore(1);
+                getline(cin, temp);
+                Time t1, t2;
+                vector<string> tokens = Tokenizer::split(temp, "/");
+                t1.setMonth(stoi(tokens[0]));
+                t1.setYear(stoi(tokens[1]));
+                cout << "\n\t\tEnter the second time with this format XX/XXXX: ";
+                getline(cin, temp);
+                tokens.clear();
+                tokens = Tokenizer::split(temp, "/");
+                t2.setMonth(stoi(tokens[0]));
+                t2.setYear(stoi(tokens[1]));
+                Money m1, m2;
+                ifstream in;
+                m1.readFromFile(in, t1.getYear());
+                m2.readFromFile(in, t2.getYear());
+                float sum1 = m1.calcOneMonth(t1);
+                float sum2 = m2.calcOneMonth(t2);
+                if (sum1 < sum2)
+                    cout << "\n\t\tThe income in " << t2.getMonth() << "/" << t2.getYear() << " larger than " << t1.getMonth() << "/" << t1.getYear() << ": " << sum2 - sum1 << endl;
+                else if (sum1 > sum2)
+                    cout << "\n\t\tThe income in " << t1.getMonth() << "/" << t1.getYear() << " larger than " << t2.getMonth() << "/" << t2.getYear() << ": " << sum1 - sum2 << endl;
+                else
+                    cout << "\n\t\tThe income in " << t1.getMonth() << "/" << t1.getYear() << " equal to " << t2.getMonth() << "/" << t2.getYear() << endl;
+                _getch();
+                system("cls");
+                goto c3;
+            }
+            case 3: {
+                system("cls");
+                gotoxy(25, 3);
+                cout << "\n\t\tEnter the first year: ";
+                int year;
+                cin >> year;
+                Time t1, t2;
+                t1.setYear(year);
+                cout << "\n\t\tEnter the second year: ";
+                cin >> year;
+                t2.setYear(year);
+                Money m1, m2;
+                ifstream in;
+                m1.readFromFile(in, t1.getYear());
+                m2.readFromFile(in, t2.getYear());
+                float sum1 = m1.calcOneYear(t1);
+                float sum2 = m2.calcOneYear(t2);
+                if (sum1 < sum2)
+                    cout << "\n\t\tThe income in " << t2.getYear() << " larger than " << t1.getYear() << ": " << sum2 - sum1 << endl;
+                else if (sum1 > sum2)
+                    cout << "\n\t\tThe income in " << t1.getYear() << " larger than " << t2.getYear() << ": " << sum1 - sum2 << endl;
+                else
+                    cout << "\n\t\tThe income in " << t1.getYear() << " equal to " << t2.getYear() << endl;
+                _getch();
+                system("cls");
+                goto c3;
+            }
+            case 4: {
+                system("cls");
+                goto abc;
+            }
+            }
+        }
+        case 4: {
+            system("cls");
+            goto menu;
+        }
+        }
+    }
     //truoc khi thoat khoi he thong can vote sao de phat trien he thong
-    case 7: {
+    case 8: {
         system("cls");
         ifstream in;
         ofstream out;
