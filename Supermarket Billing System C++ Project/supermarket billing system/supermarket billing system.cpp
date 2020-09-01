@@ -451,8 +451,6 @@ void amount::remove()
         return;
     }
     _getch();
-    
-    
 }
 void amount::removeAll()
 {
