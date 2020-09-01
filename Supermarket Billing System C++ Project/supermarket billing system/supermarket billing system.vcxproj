@@ -140,6 +140,9 @@
   <ItemGroup>
     <ClCompile Include="supermarket billing system.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="accountstore.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
