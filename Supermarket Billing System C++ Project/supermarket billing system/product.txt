@@ -1,0 +1,7 @@
+Pepsi : 1
+Mirinda : 1
+7up : 1
+Noi : 2
+Chao : 2
+Bep : 3
+
