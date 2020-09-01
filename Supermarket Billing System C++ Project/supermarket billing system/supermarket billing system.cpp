@@ -1259,7 +1259,23 @@ int main()
     cout.setf(ios::showpoint);
   
     cout<<setprecision(2);
-
+    /*cout << setprecision(2);*/
+    fstream tmp("temp.dat", ios::binary | ios::out);
+    // lay time hien tai, neu ket thuc mot nam thi file customer.txt duoc thiet lap lai
+    Time current;
+    ifstream in1;
+    ofstream out1;
+    int year = Time::readFromFile(in1); //lay nam trong file year.txt
+    if (year != current.getYear()) { //so sanh nam lay ra voi nam hien tai, neu khac thi thiet lap file txt lai tu dau
+        Customer temp;
+        vector<Customer> customer = temp.readFromFile(in1);
+        for (int i = 0; i < customer.size(); i++) {
+            customer[i].setPoint(0);
+            customer[i].setMoney(0);
+        }
+        temp.writeToFile(out1, customer);
+        Time::writeToFile(out1, current.getYear());
+    }
     // ----------------------------------------------------------------------dang nhap vao he thong
 login:
     system("cls");
@@ -1305,23 +1321,7 @@ login:
         return 0;
     //----------------------------------------------------------------------ket thuc dang nhap
     
-    cout << setprecision(2);
-    fstream tmp("temp.dat", ios::binary | ios::out);
-    // lay time hien tai, neu ket thuc mot nam thi file customer.txt duoc thiet lap lai
-    Time current;
-    ifstream in1;
-    ofstream out1;
-    int year = Time::readFromFile(in1); //lay nam trong file year.txt
-    if (year != current.getYear()) { //so sanh nam lay ra voi nam hien tai, neu khac thi thiet lap file txt lai tu dau
-        Customer temp;
-        vector<Customer> customer = temp.readFromFile(in1);
-        for (int i = 0; i < customer.size(); i++) {
-            customer[i].setPoint(0);
-            customer[i].setMoney(0);
-        }
-        temp.writeToFile(out1, customer);
-        Time::writeToFile(out1, current.getYear());
-    }
+   
  
 menu:
     // menu chinh
