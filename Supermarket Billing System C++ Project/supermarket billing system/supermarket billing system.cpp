@@ -81,7 +81,7 @@ public:
 
 class feedback {
 private:
-    char phone[11];
+    char phone[15];
     char name[26];
     char Feedback[101];
 public:
@@ -95,14 +95,14 @@ public:
             return;
         }
         cout << "\n\n\tPhone: ";
-        cin.getline(phone, 10);
+        cin.getline(phone, 11);
 
         cout << "\n\n\tCustomer Name: ";
-        cin.ignore();
+        //cin.ignore();
         cin.getline(name, 25);
 
         cout << "\n\n\tContent: ";
-        cin.ignore();
+        //cin.ignore();
         cin.getline(Feedback, 100);
         cout << "\n\n\n\tThank your feed back, We will try our best to solve this problem. ";
         fout.write((char*)&fbk, sizeof(fbk));
