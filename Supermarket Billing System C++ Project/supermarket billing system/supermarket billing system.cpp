@@ -1,3 +1,4 @@
+
 #define _CRT_SECURE_NO_WARNINGS 
 #include<iostream>
 #include<windows.h>
@@ -1253,6 +1254,16 @@ int Money::countOneYear(Time cur) {
     return count;
 }
 
+﻿#include "Account.h"
+#include "Amount.h"         //included Item.h
+#include "BestCustomer.h"   //included Customer.h
+#include "Feedback.h"
+#include "Game.h"           //included Random.h
+#include "Money.h"          //included Time.h
+#include "Product.h"
+#include "Star.h"
+#include "Tokenizer.h"
+
 int main()
 {
     cout.setf(ios::fixed);
@@ -1263,6 +1274,14 @@ int main()
     fstream tmp("temp.dat", ios::binary | ios::out);
     // lay time hien tai, neu ket thuc mot nam thi file customer.txt duoc thiet lap lai
     Time current;
+
+    // Thực hiện chặn đăng nhập trong thời gian bảo trì hệ thống
+    if (current.getHour() >= 21 && current.getMin() <= 15)
+    {
+        cout << "System is in maintenance, please be back after 21:15 p.m.\n";
+        return 0;
+    }
+
     ifstream in1;
     ofstream out1;
     int year = Time::readFromFile(in1); //lay nam trong file year.txt
@@ -1284,7 +1303,7 @@ login:
     /*acc.setAccount("vodinhphuc", "20092001", 2);
     acc.addAccount();*/
     cout << "Please, login here...";
-    type = acc.login(account::loadAccount());
+    type = acc.login(Account::loadAccount());
     if (type == 1)
     {
         fstream tmp("temp.dat", ios::binary | ios::out);
@@ -1511,7 +1530,7 @@ menu:
         fin.seekg(0);
         while (fin.read((char*)&amt, sizeof(amt)))
         {
-            int x = amt.item::retno();
+            int x = amt.Item::retno();
             if (x == ino)
             {
                 amt.pay();
@@ -1532,8 +1551,8 @@ menu:
         cout << "Please, Give us your feed back";
         gotoxy(25, 3);
         cout << "===============================\n\n";
-        cout << "\n\t\t1.Add Feedback\n\n";
-        cout << "\t\t2.Show Feedback\n\n";
+        cout << "\n\t\t1.Add feedback\n\n";
+        cout << "\t\t2.Show feedback\n\n";
         cout << "\n\t\t3. Remove feedback\n\n";
         cout << "\n\t\t4. Back to menu\n\n";
         int apc1;

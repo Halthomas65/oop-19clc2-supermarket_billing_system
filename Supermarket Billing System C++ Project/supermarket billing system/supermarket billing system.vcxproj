@@ -138,10 +138,38 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Account.cpp" />
+    <ClCompile Include="Amount.cpp" />
+    <ClCompile Include="BestCustomer.cpp" />
+    <ClCompile Include="Customer.cpp" />
+    <ClCompile Include="Feedback.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Item.cpp" />
+    <ClCompile Include="Money.cpp" />
+    <ClCompile Include="Product.cpp" />
+    <ClCompile Include="Star.cpp" />
     <ClCompile Include="supermarket billing system.cpp" />
+    <ClCompile Include="Time.cpp" />
+    <ClCompile Include="Tokenizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="accountstore.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Account.h" />
+    <ClInclude Include="Amount.h" />
+    <ClInclude Include="BestCustomer.h" />
+    <ClInclude Include="Customer.h" />
+    <ClInclude Include="Feedback.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="mainHeader.h" />
+    <ClInclude Include="Money.h" />
+    <ClInclude Include="Product.h" />
+    <ClInclude Include="Random.h" />
+    <ClInclude Include="Star.h" />
+    <ClInclude Include="Time.h" />
+    <ClInclude Include="Tokenizer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
